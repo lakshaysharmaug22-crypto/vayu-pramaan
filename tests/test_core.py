@@ -81,3 +81,13 @@ def test_cpcb_pm25_breakpoints(pm25, expected):
     con = duckdb.connect()
     con.execute(warehouse.MACROS)
     assert round(con.execute(f"select si_pm25({pm25})").fetchone()[0]) == expected
+
+
+def test_psi_flags_real_shift_not_noise():
+    import numpy as np
+    from vp.extras import _psi
+    rng = np.random.default_rng(0)
+    ref = rng.normal(0, 1, 600)
+    same = _psi(ref, rng.normal(0, 1, 30))
+    shifted = _psi(ref, rng.normal(2.5, 1, 30))
+    assert shifted > 1.0 and shifted > 4 * same

@@ -95,10 +95,34 @@ def write_all(ctx: dict, run) -> int:
     g = ctx.get("graded")
     n += _w("ledger.json", {"verify": ctx["verify"], "blocks": ledger.proofs_for_site(),
                             "graded": _df(g) if g is not None and len(g) else []})
+    n += _w("whatif.json", ctx.get("whatif", {}))
+    n += _w("arena.json", ctx.get("arena", {}))
+    n += _w("drift.json", ctx.get("drift", {}))
     nomad = C.DATA / "nomad-report.json"
     n += _w("nomad.json", json.loads(nomad.read_text()) if nomad.exists() else {"status": "not_run"})
     con.close()
     return n
+
+
+def write_api(ctx: dict) -> int:
+    from . import extras
+    from .warehouse import connect
+    con = connect(read_only=True)
+    ov = json.loads((OUT / "overview.json").read_text())
+    cat = extras.write_api(con, ov, ctx.get("metrics", {}))
+    con.close()
+    _w("catalog.json", cat)
+    return len(cat["datasets"])
+
+
+def write_lineage(run) -> int:
+    from . import extras
+    from .warehouse import connect
+    con = connect(read_only=True)
+    lin = extras.lineage(con, run)
+    con.close()
+    _w("lineage.json", lin)
+    return len(lin["nodes"])
 
 
 def write_manifest(doc: dict):

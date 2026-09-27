@@ -1,0 +1,338 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Vayu Pramaan open data API",
+  "version": "1.0.0",
+  "description": "Static JSON endpoints rebuilt daily at 06:00 IST. No key, no rate limit."
+ },
+ "paths": {
+  "/api/v1/aqi/daily.json": {
+   "get": {
+    "summary": "Delhi city AQI, daily",
+    "description": "CPCB method: mean of station AQIs (PM2.5 + PM10 sub-indices, \u226516 valid hours).",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "generated_at": {
+           "type": "string",
+           "format": "date-time"
+          },
+          "rows": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "date": {
+              "type": "string"
+             },
+             "aqi": {
+              "type": "integer"
+             },
+             "band": {
+              "type": "string"
+             },
+             "grap": {
+              "type": "string"
+             },
+             "pm25": {
+              "type": "number"
+             },
+             "pm10": {
+              "type": "number"
+             },
+             "n_stations": {
+              "type": "integer"
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/aqi/stations-latest.json": {
+   "get": {
+    "summary": "Station AQI, latest full day",
+    "description": "One row per reporting station.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "generated_at": {
+           "type": "string",
+           "format": "date-time"
+          },
+          "rows": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "station": {
+              "type": "string"
+             },
+             "date": {
+              "type": "string"
+             },
+             "aqi": {
+              "type": "number"
+             },
+             "pm25": {
+              "type": "number"
+             },
+             "pm10": {
+              "type": "number"
+             },
+             "hours": {
+              "type": "integer"
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/fires/daily.json": {
+   "get": {
+    "summary": "Upwind fire detections, daily",
+    "description": "VIIRS detections in Punjab and Haryana, split by state.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "generated_at": {
+           "type": "string",
+           "format": "date-time"
+          },
+          "rows": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "date": {
+              "type": "string"
+             },
+             "fires": {
+              "type": "integer"
+             },
+             "fires_punjab": {
+              "type": "integer"
+             },
+             "fires_haryana": {
+              "type": "integer"
+             },
+             "frp_sum": {
+              "type": "number"
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/weather/daily.json": {
+   "get": {
+    "summary": "Transport and mixing, daily",
+    "description": "Delhi wind, northwest-wind share (Delhi and Ludhiana), mixing height, temperature, humidity, rain.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "generated_at": {
+           "type": "string",
+           "format": "date-time"
+          },
+          "rows": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "date": {
+              "type": "string"
+             },
+             "wind_speed": {
+              "type": "number"
+             },
+             "wind_dir": {
+              "type": "number"
+             },
+             "nw_frac": {
+              "type": "number"
+             },
+             "nw_frac_upwind": {
+              "type": "number"
+             },
+             "blh": {
+              "type": "number"
+             },
+             "blh_min": {
+              "type": "number"
+             },
+             "temp": {
+              "type": "number"
+             },
+             "rh": {
+              "type": "number"
+             },
+             "precip": {
+              "type": "number"
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cams/daily.json": {
+   "get": {
+    "summary": "Copernicus CAMS analysis, daily",
+    "description": "CAMS PM2.5/PM10 converted with the same CPCB method.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "generated_at": {
+           "type": "string",
+           "format": "date-time"
+          },
+          "rows": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "date": {
+              "type": "string"
+             },
+             "aqi_equiv": {
+              "type": "integer"
+             },
+             "pm25": {
+              "type": "number"
+             },
+             "pm10": {
+              "type": "number"
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/forecast/latest.json": {
+   "get": {
+    "summary": "Latest forecast (72 hours)",
+    "description": "Latest forecast (72 hours).",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "generated_at": {
+           "type": "string",
+           "format": "date-time"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/forecast/ledger.json": {
+   "get": {
+    "summary": "Every committed forecast",
+    "description": "Every committed forecast.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "generated_at": {
+           "type": "string",
+           "format": "date-time"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/metrics/backtest.json": {
+   "get": {
+    "summary": "Backtest metrics",
+    "description": "Backtest metrics.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "generated_at": {
+           "type": "string",
+           "format": "date-time"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

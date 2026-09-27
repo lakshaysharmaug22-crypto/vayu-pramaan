@@ -13,7 +13,7 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from . import agent, config as C, features, geo, ingest, insights, ledger, model, warehouse
+from . import agent, config as C, extras, features, geo, ingest, insights, ledger, model, warehouse
 from .runner import Check, Run
 
 
@@ -172,6 +172,15 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     with R.step("insights", "GRAP decision table") as r:
         ctx["decision"] = insights.decision_table(bt)
         ctx["grap_call"] = insights.grap_call(fc, 0.3); r.rows_out = len(ctx["decision"].get("thresholds", []))
+    with R.step("insights", "what-if grid (live models)") as r:
+        ctx["whatif"] = extras.whatif_grid()
+        r.rows_out = sum(len(v["grid"]) for v in ctx["whatif"]["horizons"].values())
+    with R.step("insights", "model arena") as r:
+        ctx["arena"] = extras.arena(con, bt); r.rows_out = sum(len(h["rows"]) for h in ctx["arena"].get("horizons", []))
+    with R.step("insights", "drift monitor (seasonal PSI)") as r:
+        ctx["drift"] = extras.drift(feats, bt, ctx.get("graded")); r.rows_out = len(ctx["drift"]["features"])
+        drifted = [f["feature"] for f in ctx["drift"]["features"] if f["status"] == "drift"]
+        r.checks.append(Check("no feature drift (PSI ≤ 0.25)", not drifted, ", ".join(drifted) or "all stable", "warn"))
     con.close()
     ro = agent.readonly_con()
     with R.step("insights", "daily AI brief") as r:
@@ -192,6 +201,12 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     with R.step("export", "site JSON") as r:
         from . import export
         r.rows_out = export.write_all(ctx, R)
+    with R.step("export", "public API v1 + catalog") as r:
+        from . import export
+        r.rows_out = export.write_api(ctx)
+    with R.step("export", "lineage graph") as r:
+        from . import export
+        r.rows_out = export.write_lineage(R)
     doc = R.save()
     from . import export
     export.write_manifest(doc)

@@ -13,6 +13,12 @@ Release-gated by [Nomad Loop Engine](https://github.com/lakshaysharmaug22-crypto
 | GRAP decision desk | Business Analyst | Forecast → GRAP stage call; cost sliders set the warning threshold; season cost vs reacting on the day; stakeholder memo |
 | Ask Vayu | AI Analytics | Text-to-SQL agent on read-only whitelisted views with guardrails, 25-question eval, daily AI brief |
 | Live · Pipeline | Data Engineering | 8-stage pipeline, data contracts, freshness checks, run manifests, halt-on-failure |
+| What-if simulator | Data Science · Business | Live models re-forecast under changed fires, wind and mixing height (model response, not causal) |
+| Model arena | Data Science | LightGBM vs ridge, persistence, climatology; CAMS as a labelled reference |
+| Lineage | Data Engineering | Interactive DAG from sources to screens with live row counts and check status |
+| Model health | MLOps | Seasonal PSI with an empirical null per input, error drift by season, live error vs backtest |
+| Open data | Data Engineering | Static JSON API v1, OpenAPI 3.1 spec, dataset catalog with schemas and freshness |
+| Search | Product | Command palette (/ or Ctrl+K): dates, stations, findings, questions, blocks, endpoints |
 | Public ledger | Systems | SHA-256 + Merkle root + hash chain, append-only, verifiable in the browser, OpenTimestamps anchoring |
 | Tested by Nomad Loop | Engineering QA | Nomad's latest run against this site: flows, bugs, verdict |
 

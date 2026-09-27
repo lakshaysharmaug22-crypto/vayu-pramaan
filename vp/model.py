@@ -103,11 +103,25 @@ def backtest(feats: pd.DataFrame) -> pd.DataFrame:
             pred = predict(models, th)
             clim = _climatology(train, th)
             out.append(pd.concat([th[["issue_date", "target_date", "horizon_h", "target", "aqi_0"]], pred], axis=1)
-                       .assign(season=y, climatology=clim))
+                       .assign(season=y, climatology=clim, ridge=ridge_fit_predict(train, th)))
     bt = pd.concat(out, ignore_index=True) if out else pd.DataFrame()
     if len(bt):
         bt = bt.rename(columns={"target": "actual", "aqi_0": "persistence"})
     return bt
+
+
+def ridge_fit_predict(train: pd.DataFrame, test: pd.DataFrame, lam: float = 10.0) -> np.ndarray:
+    """Linear challenger for the model arena: standardised ridge regression, closed form."""
+    tr = train.dropna(subset=["target"])
+    Xtr, Xte = tr[FEATURES].astype(float), test[FEATURES].astype(float)
+    med = Xtr.median()
+    Xtr, Xte = Xtr.fillna(med), Xte.fillna(med)
+    mu, sd = Xtr.mean(), Xtr.std().replace(0, 1)
+    A, B = ((Xtr - mu) / sd).to_numpy(), ((Xte - mu) / sd).to_numpy()
+    y = tr["target"].to_numpy(float)
+    ym = y.mean()
+    w = np.linalg.solve(A.T @ A + lam * np.eye(A.shape[1]), A.T @ (y - ym))
+    return np.round(B @ w + ym)
 
 
 def _climatology(train: pd.DataFrame, test: pd.DataFrame) -> np.ndarray:
@@ -193,6 +207,9 @@ def calibration(bt: pd.DataFrame, bins: int = 5) -> list[dict]:
 
 
 # ───────────── live ─────────────
+LIVE: dict = {}  # horizon → (models, feature row) from the last live run, reused by the what-if grid
+
+
 def live_forecast(feats: pd.DataFrame) -> tuple[pd.DataFrame, dict, dict]:
     """Train on all history per horizon, forecast from the latest issue day."""
     latest = feats.issue_date.max()
@@ -204,6 +221,7 @@ def live_forecast(feats: pd.DataFrame) -> tuple[pd.DataFrame, dict, dict]:
         if not len(x):
             continue
         p = predict(models, x)
+        LIVE[int(h)] = (models, x)
         rows.append(pd.concat([x[["issue_date", "target_date", "horizon_h", "aqi_0"]], p], axis=1))
         expl[int(h)] = explain_row(models, x)
         imps[int(h)] = importance(models)

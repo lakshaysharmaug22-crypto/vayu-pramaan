@@ -7,9 +7,11 @@
 <header class="top">
   <a class="logo" href="#top" aria-label="Vayu Pramaan home"><b>Vayu Pramaan</b><span>वायु प्रमाण</span></a>
   <nav class="nav" aria-label="Sections">
-    <a href="#forecast">Forecast</a><a href="#findings">Findings</a><a href="#desk">Decision desk</a>
-    <a href="#ask">Ask Vayu</a><a href="#live">Live</a><a href="#pipeline">Pipeline</a><a href="#ledger">Ledger</a><a href="#nomad">QA</a>
+    <a href="#forecast">Forecast</a><a href="#whatif">What-if</a><a href="#arena">Arena</a><a href="#findings">Findings</a><a href="#desk">Decision desk</a>
+    <a href="#ask">Ask Vayu</a><a href="#live">Live</a><a href="#pipeline">Pipeline</a><a href="#lineage">Lineage</a><a href="#health">Model health</a>
+    <a href="#ledger">Ledger</a><a href="#api">Open data</a><a href="#nomad">QA</a>
   </nav>
+  <button class="search-btn" id="search-btn" type="button" aria-label="Search">⌕ <span>Search</span> <kbd>/</kbd></button>
   <div class="status" id="status"><i class="dot"></i><span>Loading…</span></div>
 </header>
 <div id="banner"></div>
@@ -26,4 +28,9 @@
   <span class="mono">NASA FIRMS · CPCB · Open-Meteo · Copernicus CAMS</span>
 </footer>
 <dialog id="modal" aria-labelledby="m-title"><div class="m-head"><div><div class="eyebrow" id="m-eyebrow"></div><h2 id="m-title"></h2></div><button class="m-close" id="m-close" aria-label="Close">×</button></div><div class="m-body" id="m-body"></div></dialog>
+<dialog id="palette" aria-label="Search">
+  <div class="pal-in"><span aria-hidden="true">⌕</span><input id="pal-q" type="search" placeholder="Try “12 nov 2024”, “anand vihar”, “severe”, “/api”, “drift”" autocomplete="off" aria-label="Search everything"></div>
+  <div class="pal-list" id="pal-list" role="listbox"></div>
+  <div class="pal-hint"><span>↑↓ move</span><span>↵ open</span><span>esc close</span><span>Dates, stations, findings, questions, blocks, endpoints, pipeline steps</span></div>
+</dialog>
 <script src="app.js"></script>

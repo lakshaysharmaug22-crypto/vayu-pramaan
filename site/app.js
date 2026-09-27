@@ -2,7 +2,8 @@
 (() => {
 "use strict";
 const $ = (s, r = document) => r.querySelector(s);
-const FILES = ["overview", "live", "seasons", "season_points", "backtest", "findings", "decision", "agent", "ledger", "pipeline", "nomad"];
+const FILES = ["overview", "live", "seasons", "season_points", "backtest", "findings", "decision", "agent", "ledger", "pipeline", "nomad",
+  "whatif", "arena", "drift", "lineage", "catalog"];
 const D = {};
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -116,7 +117,8 @@ Promise.allSettled(FILES.map(f => fetch(`data/${f}.json`, { cache: "no-cache" })
   .then(res => {
     res.forEach((r, i) => { D[FILES[i]] = r.status === "fulfilled" ? r.value : null; });
     if (!D.overview) { $("#hero").innerHTML = `<p class="skeleton">Couldn't load the forecast data. Run the pipeline to generate site/data.</p>`; return; }
-    status(); banner(); hero(); forecastRow(); findingsRow(); deskRow(); askRow(); liveRow(); pipelineRow(); ledgerRow(); nomadRow();
+    status(); banner(); hero(); forecastRow(); whatifRow(); arenaRow(); findingsRow(); deskRow(); askRow(); liveRow();
+    pipelineRow(); lineageRow(); healthRow(); ledgerRow(); apiRow(); nomadRow(); search.init();
     if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
   });
 
@@ -330,11 +332,14 @@ function findingsRow() {
   const cards = F.map(f => card({
     title: f.title, eyebrow: "SQL finding",
     body: (f.error ? `<p class="bad-t">${esc(f.error)}</p>` : findingChart(f, 300)) + `<p class="take">${esc(f.takeaway || "")}</p>`,
-    foot: "Query + result", open: () => modal({ eyebrow: "Data Analyst · DuckDB", title: f.title,
-      body: `<p style="margin:0;font-size:16px">${esc(f.takeaway || "")}</p>${findingChart(f, 640)}${f.rows ? table(Object.keys(f.rows[0] || {}), f.rows) : ""}<div><div class="eyebrow" style="margin-bottom:6px">Query</div><pre>${kw(f.sql)}</pre></div>` }),
+    foot: "Query + result", open: () => openFinding(f),
   }));
   cards.push(card({ title: "KPI dictionary", eyebrow: "Shared definitions", body: `<p class="take">One definition per metric, used by every chart, the decision desk and the agent.</p>`, foot: "8 metrics", open: kpiModal }));
   row({ id: "findings", title: "Smog findings", role: "Data Analyst", c: "--da", sub: "Six questions about where Delhi's smog comes from, each answered by one query you can read.", cards });
+}
+function openFinding(f) {
+  modal({ eyebrow: "Data Analyst · DuckDB", title: f.title,
+    body: `<p style="margin:0;font-size:16px">${esc(f.takeaway || "")}</p>${findingChart(f, 640)}${f.rows ? table(Object.keys(f.rows[0] || {}), f.rows) : ""}<div><div class="eyebrow" style="margin-bottom:6px">Query</div><pre>${kw(f.sql)}</pre></div>` });
 }
 function findingChart(f, w) {
   const r = f.rows || [], big = w > 400, h = big ? 220 : 140;
@@ -543,4 +548,291 @@ function nomadRow() {
   const bg = bugs.map(x => card({ eyebrow: `${esc(x.severity || "")} · ${esc(x.status || "")}`, title: x.title, body: `<ol style="margin:0;padding-left:18px;font-size:12.5px" class="muted">${(x.repro || []).slice(0, 4).map(s => `<li>${esc(s)}</li>`).join("")}</ol>`, foot: x.issue_url ? `<a href="${esc(x.issue_url)}" onclick="event.stopPropagation()">GitHub issue ›</a>` : "" }));
   row({ id: "nomad", title: "Tested by Nomad Loop", role: "Engineering QA", c: "--qa", sub: "Nomad Loop Engine explores this site like a user on every deploy, files bugs with repro steps, and blocks the release on a critical one.", cards: [verdict, ...fl, ...bg] });
 }
+
+/* ───────────── what-if simulator ───────────── */
+function whatifRow() {
+  const W = D.whatif; if (!W?.horizons || !Object.keys(W.horizons).length) return;
+  const ax = W.axes, hs = Object.keys(W.horizons).sort((a, b) => a - b);
+  const near = (arr, v) => arr.reduce((b, x, i) => Math.abs(x - v) < Math.abs(arr[b] - v) ? i : b, 0);
+  const st = { h: hs.includes("48") ? "48" : hs[0] };
+  const reset = () => { st.f = ax.fire_mult.indexOf(1); st.n = near(ax.nw, W.horizons[st.h].base.nw_frac_0 ?? .5); st.b = ax.blh_mult.indexOf(1); };
+  reset();
+  const cell = (h, f, n, b) => W.horizons[h].grid[f * ax.nw.length * ax.blh_mult.length + n * ax.blh_mult.length + b];
+  const sim = card({ size: "xwide", interactive: true, eyebrow: "Model response · not a causal estimate", title: "What if…",
+    body: `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><div class="seg" id="wi-h">${hs.map(h => `<button type="button" data-h="${h}" aria-pressed="${h === st.h}">+${h}h</button>`).join("")}</div>
+      <div class="presets"><button type="button" data-p="stop">Burning stops</button><button type="button" data-p="peak">Peak burning + NW wind</button><button type="button" data-p="inv">Winter inversion</button><button type="button" data-p="reset">Today</button></div></div>
+      <div style="display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:6px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="ctrl"><label for="wi-f">Upwind fires <b id="wi-fv"></b></label><input type="range" id="wi-f" min="0" max="${ax.fire_mult.length - 1}" step="1"></div>
+          <div class="ctrl"><label for="wi-n">Northwest wind share <b id="wi-nv"></b></label><input type="range" id="wi-n" min="0" max="${ax.nw.length - 1}" step="1"></div>
+          <div class="ctrl"><label for="wi-b">Mixing height <b id="wi-bv"></b></label><input type="range" id="wi-b" min="0" max="${ax.blh_mult.length - 1}" step="1"></div>
+          <p class="dim" style="margin:0;font-size:12px">The live models re-forecast with these inputs changed. They learned correlations from history, so read this as how the forecast responds, not as proof of cause.</p>
+        </div>
+        <div id="wi-out" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>`, foot: `${W.horizons[st.h].grid.length} precomputed scenarios per horizon`, open: null });
+  sim.classList.add("black");
+  const heat = card({ size: "wide", interactive: true, eyebrow: "Every scenario at this mixing height", title: "Fires × wind", body: `<div id="wi-heat"></div>`, foot: "Red and black cells cross the severe line (AQI 400)", open: null });
+  heat.classList.add("black");
+  row({ id: "whatif", title: "What if…", role: "Data Science · Business", c: "--red", sub: "Move the levers that drive Delhi's smog and watch the live model re-forecast. Presets show the scenarios policy actually argues about.", cards: [sim, heat] });
+  const base = h => (D.overview.forecast || []).find(f => String(f.horizon_h) === h);
+  const upd = () => {
+    const g = cell(st.h, st.f, st.n, st.b), [, , , p10, p50, p90, ps] = g, b = band(p50), bf = base(st.h), bs = W.horizons[st.h].base;
+    $("#wi-f").value = st.f; $("#wi-n").value = st.n; $("#wi-b").value = st.b;
+    $("#wi-fv").textContent = `${ax.fire_mult[st.f]}× · ${n0((bs.fires_0 || 0) * ax.fire_mult[st.f])} detections`;
+    $("#wi-nv").textContent = pct(ax.nw[st.n]);
+    $("#wi-bv").textContent = `${ax.blh_mult[st.b]}× · ${n0((bs.blh_0 || 0) * ax.blh_mult[st.b])} m`;
+    const d = bf ? p50 - bf.p50 : 0, sev = ps >= .5, all = W.horizons[st.h].grid.map(x => x[4]), spread = Math.max(...all) - Math.min(...all);
+    const stage = p50 > 450 ? "Stage IV" : p50 > 400 ? "Stage III" : p50 > 300 ? "Stage II" : p50 > 200 ? "Stage I" : "No GRAP stage";
+    $("#wi-out").innerHTML = `<div class="eyebrow">${d8(W.horizons[st.h].target_date)} · +${st.h}h</div>
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span class="big num" style="font-size:52px;color:var(${b[2]})">${n0(p50)}</span><span style="font-weight:600">${b[1]}</span>
+      <span class="mono ${d > 0 ? "delta-up" : d < 0 ? "delta-down" : "dim"}">${d > 0 ? "▲ +" : d < 0 ? "▼ " : "± "}${n0(d)} vs today's forecast</span></div>
+      ${bandStrip({ p10, p50, p90 })}
+      <div><div style="display:flex;justify-content:space-between;font-size:12.5px"><span class="muted">P(severe)</span><b class="mono ${sev ? "red-t" : ""}">${pct(ps)}</b></div><div class="meter"><i style="width:${Math.max(2, ps * 100)}%;background:${sev ? "var(--red)" : ps > .2 ? "var(--ba)" : "var(--qa)"}"></i></div></div>
+      <div style="font-size:14px">GRAP: <b class="${p50 > 400 ? "red-t" : ""}">${stage}</b> · 80% range <span class="num">${n0(p10)}–${n0(p90)}</span></div>
+      ${spread < 40 ? `<p class="dim" style="margin:0;font-size:12px">Every scenario here lands within ${spread} AQI points. Outside the burning season the model has seen few big fire days at this time of year, so it barely reacts. From October the levers bite.</p>` : ""}`;
+    let g2 = "", cw = 58, ch = 30, l = 70, t = 22;
+    ax.nw.forEach((n, j) => g2 += `<text x="${l + j * cw + cw / 2}" y="14" text-anchor="middle">${pct(n)}</text>`);
+    ax.fire_mult.forEach((f, i) => {
+      g2 += `<text x="${l - 8}" y="${t + i * ch + ch / 2 + 3}" text-anchor="end">${f}× fires</text>`;
+      ax.nw.forEach((n, j) => { const c = cell(st.h, i, j, st.b), v = c[4], sv = v > 400, bb = band(v), cur = i === st.f && j === st.n;
+        g2 += `<g style="cursor:pointer" data-f="${i}" data-n="${j}"><rect x="${l + j * cw + 1}" y="${t + i * ch + 1}" width="${cw - 2}" height="${ch - 2}" rx="4" fill="${sv ? "#000" : `var(${bb[2]})`}" opacity="${sv ? 1 : .55}" stroke="${cur ? "#fff" : sv ? "var(--red)" : "none"}" stroke-width="${cur ? 2 : 1}"/><text x="${l + j * cw + cw / 2}" y="${t + i * ch + ch / 2 + 4}" text-anchor="middle" style="fill:${sv ? "var(--red)" : "#0A0C0F"};font-weight:600;font-size:11px">${v}</text></g>`; });
+    });
+    g2 += `<text class="lbl" x="${l + ax.nw.length * cw / 2}" y="${t + ax.fire_mult.length * ch + 16}" text-anchor="middle">northwest wind share →</text>`;
+    $("#wi-heat").innerHTML = `<div style="overflow-x:auto">${svg(l + ax.nw.length * cw + 4, t + ax.fire_mult.length * ch + 22, g2)}</div>`;
+    $("#wi-heat").querySelectorAll("g[data-f]").forEach(el => el.onclick = () => { st.f = +el.dataset.f; st.n = +el.dataset.n; upd(); });
+    $("#wi-h").querySelectorAll("button").forEach(bt => bt.setAttribute("aria-pressed", bt.dataset.h === st.h));
+  };
+  $("#wi-f").oninput = e => { st.f = +e.target.value; upd(); };
+  $("#wi-n").oninput = e => { st.n = +e.target.value; upd(); };
+  $("#wi-b").oninput = e => { st.b = +e.target.value; upd(); };
+  $("#wi-h").querySelectorAll("button").forEach(bt => bt.onclick = () => { st.h = bt.dataset.h; upd(); });
+  sim.querySelectorAll("[data-p]").forEach(bt => bt.onclick = () => {
+    const p = bt.dataset.p; reset();
+    if (p === "stop") st.f = 0;
+    if (p === "peak") { st.f = ax.fire_mult.length - 1; st.n = ax.nw.length - 1; st.b = ax.blh_mult.indexOf(.75); }
+    if (p === "inv") st.b = 0;
+    upd();
+  });
+  upd();
+}
+
+/* ───────────── model arena ───────────── */
+function arenaRow() {
+  const A = D.arena; if (!A?.horizons?.length) return;
+  const cards = A.horizons.map(h => {
+    const fair = h.rows.filter(r => !r.reference), mx = Math.max(...h.rows.map(r => r.mae)), worst = fair[fair.length - 1]?.model;
+    const c = card({ eyebrow: `+${h.horizon_h}h · ${h.seasons} seasons walk-forward`, title: `Leaderboard, ${h.horizon_h}h ahead`,
+      body: `<div class="lb">${h.rows.map((r, i) => { const win = i === 0 && !r.reference, bad = r.model === worst, col = win ? "var(--ds)" : bad ? "var(--red)" : r.reference ? "var(--dim)" : "var(--muted)";
+        return `<div class="it" style="--c:${col}"><span class="mono" style="color:${col}">${r.reference ? "–" : i + 1}</span><span style="${win ? "font-weight:600" : ""}">${esc(r.model)}${r.reference ? ` <span class="pill skipped">reference</span>` : ""}</span><span class="mono num" style="color:${col}">${r.mae}</span><div class="bar"><i style="width:${r.mae / mx * 100}%"></i></div></div>`; }).join("")}</div>`,
+      foot: "Mean absolute error in AQI points · lower is better", open: () => arenaModal(h) });
+    c.classList.add("black");
+    return c;
+  });
+  const h48 = A.horizons.find(h => h.horizon_h === 48) || A.horizons[0], fair = h48.rows.filter(r => !r.reference);
+  const wins = card({ eyebrow: `${h48.horizon_h}h ahead`, title: "Season wins",
+    body: bars(fair.map((r, i) => ({ label: r.model.split(" ")[0], v: r.season_wins || 0, c: i === 0 ? "var(--ds)" : i === fair.length - 1 ? "var(--red)" : "var(--surface-3)" })), { w: 300, h: 150 }),
+    foot: "Seasons where each model had the lowest error", open: () => arenaModal(h48) });
+  const sev = card({ eyebrow: `${h48.horizon_h}h ahead`, title: "Who catches severe days",
+    body: hbars(h48.rows.map(r => ({ label: r.model.replace(" (LightGBM quantile)", ""), v: r.csi || 0, c: r.reference ? "var(--dim)" : r.model.startsWith("Vayu") ? "var(--ds)" : "var(--surface-3)" })), { w: 300, labelW: 150, fmt: v => v.toFixed(2) }),
+    foot: "Critical success index for AQI > 400", open: () => arenaModal(h48) });
+  const note = card({ eyebrow: "Read this first", title: "Why CAMS sits apart", body: `<p class="take">${esc(A.note || "")}</p>`, foot: "" });
+  row({ id: "arena", title: "Model arena", role: "Data Science", c: "--ds", sub: "The model has to beat simple challengers on seasons it never saw. Winner in orange, weakest fair contender in red.", cards: [...cards, wins, sev, note] });
+}
+function arenaModal(h) {
+  modal({ eyebrow: `Model arena · ${h.horizon_h}h ahead`, title: "Full leaderboard",
+    body: `${table(["model", "n", "mae", "rmse", "bias", "csi", "severe_hits", "severe_days", "season_wins"], h.rows)}<p class="muted" style="margin:0">Bias is forecast minus observed: negative means the model runs low. ${esc(D.arena.note || "")}</p>` });
+}
+
+/* ───────────── lineage graph ───────────── */
+function lineageRow() {
+  const Lg = D.lineage; if (!Lg?.nodes) return;
+  const layers = ["source", "raw", "curated", "model", "product"], LC = { source: "var(--muted)", raw: "var(--de)", curated: "var(--da)", model: "var(--ds)", product: "var(--ai)" };
+  const colW = 176, nw = 146, nh = 30, gap = 14, pos = {};
+  const byL = layers.map(l => Lg.nodes.filter(n => n.layer === l));
+  const H = Math.max(...byL.map(a => a.length)) * (nh + gap) + 36, W = layers.length * colW;
+  byL.forEach((arr, li) => { const off = (H - 30 - arr.length * (nh + gap)) / 2 + 26; arr.forEach((n, i) => pos[n.id] = { x: 8 + li * colW, y: off + i * (nh + gap), n }); });
+  let g = layers.map((l, i) => `<text x="${8 + i * colW}" y="14" style="fill:${LC[l]};letter-spacing:.1em">${l.toUpperCase()}</text>`).join("");
+  Lg.edges.forEach((e, i) => { const a = pos[e.from], b = pos[e.to]; if (!a || !b) return; const x1 = a.x + nw, y1 = a.y + nh / 2, x2 = b.x, y2 = b.y + nh / 2, mx = (x1 + x2) / 2;
+    g += `<path data-from="${e.from}" data-to="${e.to}" d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}" fill="none" stroke="#3a3f47" stroke-width="1.2"/>`; });
+  Object.values(pos).forEach(({ x, y, n }) => { const bad = n.status === "failed", warn = n.status === "warn";
+    g += `<g class="node" data-id="${n.id}" tabindex="0"><rect x="${x}" y="${y}" width="${nw}" height="${nh}" rx="7" fill="${bad ? "#1a0305" : "#0c0e11"}" stroke="${bad ? "var(--red)" : warn ? "var(--ba)" : LC[n.layer]}" stroke-width="${bad ? 2 : 1}"/><text x="${x + 10}" y="${y + 19}" style="fill:var(--text)">${esc(n.label.length > 17 ? n.label.slice(0, 16) + "…" : n.label)}</text>${n.rows != null ? `<text x="${x + nw - 8}" y="${y + 19}" text-anchor="end">${n.rows >= 1e6 ? (n.rows / 1e6).toFixed(1) + "M" : n.rows >= 1e3 ? Math.round(n.rows / 1e3) + "k" : n.rows}</text>` : ""}</g>`; });
+  const c = card({ size: "xwide", interactive: true, eyebrow: `${Lg.nodes.length} nodes · ${Lg.edges.length} edges · live row counts`, title: "From satellite to screen",
+    body: `<div style="overflow-x:auto"><svg class="chart lin" id="lin" viewBox="0 0 ${W} ${H}" style="min-width:${W}px">${g}</svg></div><p class="dim" style="margin:0;font-size:12px">Hover a node to trace everything upstream and downstream in red. Click for its columns, checks and freshness.</p>`,
+    foot: "", open: null });
+  c.classList.add("black");
+  const failed = Lg.nodes.filter(n => n.status === "failed"), fresh = Lg.nodes.filter(n => n.freshness);
+  const st = card({ eyebrow: "Health", title: failed.length ? `${failed.length} node${failed.length > 1 ? "s" : ""} failing` : "All nodes healthy",
+    body: `<div class="big" style="color:${failed.length ? "var(--red)" : "var(--qa)"}">${Lg.nodes.filter(n => n.status && n.status !== "failed").length}/${Lg.nodes.filter(n => n.status).length}</div><p class="take">checked nodes passing. ${fresh.length} nodes carry a freshness stamp.</p>`, foot: "" });
+  st.classList.add("black");
+  row({ id: "lineage", title: "Lineage", role: "Data Engineering", c: "--de", sub: "Every table, model and screen, and exactly what feeds it. Failures show in red.", cards: [c, st] });
+  const svgEl = $("#lin"), up = {}, dn = {};
+  Lg.edges.forEach(e => { (dn[e.from] = dn[e.from] || []).push(e.to); (up[e.to] = up[e.to] || []).push(e.from); });
+  const walk = (id, m, acc = new Set()) => { (m[id] || []).forEach(x => { if (!acc.has(x)) { acc.add(x); walk(x, m, acc); } }); return acc; };
+  svgEl.querySelectorAll(".node").forEach(el => {
+    const id = el.dataset.id;
+    el.onmouseenter = el.onfocus = () => { const set = new Set([id, ...walk(id, up), ...walk(id, dn)]); svgEl.classList.add("focus");
+      svgEl.querySelectorAll(".node").forEach(n => n.classList.toggle("hl", set.has(n.dataset.id)));
+      svgEl.querySelectorAll("path").forEach(p => p.classList.toggle("hl", set.has(p.dataset.from) && set.has(p.dataset.to))); };
+    el.onmouseleave = el.onblur = () => { svgEl.classList.remove("focus"); svgEl.querySelectorAll(".hl").forEach(x => x.classList.remove("hl")); };
+    el.onclick = () => lineageModal(Lg.nodes.find(n => n.id === id), up[id] || [], dn[id] || []);
+  });
+}
+function lineageModal(n, ups, dns) {
+  const name = id => D.lineage.nodes.find(x => x.id === id)?.label || id;
+  modal({ eyebrow: `Lineage · ${n.layer}`, title: n.label,
+    body: `<dl class="kv"><dt>Rows</dt><dd>${n.rows != null ? n.rows.toLocaleString("en-IN") : "–"}</dd><dt>Status</dt><dd class="${n.status === "failed" ? "red-t" : ""}">${n.status || "–"}</dd><dt>Freshness</dt><dd>${esc(n.freshness || "–")}</dd><dt>Fed by</dt><dd>${ups.map(name).join(", ") || "–"}</dd><dt>Feeds</dt><dd>${dns.map(name).join(", ") || "–"}</dd></dl>
+      ${n.columns ? `<h3>Columns</h3>${table(["column_name", "data_type"], n.columns, 100)}` : ""}${n.checks?.length ? `<h3>Checks</h3>${table(["name", "passed", "detail"], n.checks.map(c => ({ ...c, passed: c.passed ? "pass" : "FAIL" })))}` : ""}` });
+}
+
+/* ───────────── model health (drift) ───────────── */
+function healthRow() {
+  const Dr = D.drift; if (!Dr?.features) return;
+  const S = { drift: ["DRIFT", "var(--red)"], watch: ["WATCH", "var(--ba)"], stable: ["STABLE", "var(--qa)"] }[Dr.status] || ["–", "var(--dim)"];
+  const stc = card({ eyebrow: `Last ${Dr.window_days} days vs same days in ${Dr.reference.split(", ")[1] || "earlier years"}`, title: "Input drift",
+    body: `<div class="big" style="color:${S[1]};letter-spacing:.04em">${S[0]}</div><p class="take">${Dr.features.filter(f => f.status === "drift").length} drifting · ${Dr.features.filter(f => f.status === "watch").length} to watch · ${Dr.features.length} inputs checked</p>`,
+    foot: "Seasonal PSI with an empirical null", open: () => driftModal() });
+  stc.classList.add("black");
+  const top = Dr.features.slice(0, 9), w = 460, rh = 24, lw = 190, mx = Math.max(...top.map(f => Math.max(f.psi, f.threshold))) * 1.1;
+  let g = "";
+  top.forEach((f, i) => { const y = i * rh, bw = f.psi / mx * (w - lw - 50), tx = lw + f.threshold / mx * (w - lw - 50), col = f.status === "drift" ? "var(--red)" : f.status === "watch" ? "var(--ba)" : "#3a3f47";
+    g += `<text class="lbl" x="${lw - 8}" y="${y + 15}" text-anchor="end">${esc(FEAT[f.feature] || f.feature)}</text><rect x="${lw}" y="${y + 5}" width="${Math.max(2, bw)}" height="${rh - 10}" rx="3" fill="${col}"/><line x1="${tx}" x2="${tx}" y1="${y + 2}" y2="${y + rh - 2}" stroke="#fff" stroke-width="1.5"/><text x="${w - 4}" y="${y + 15}" text-anchor="end" style="fill:${f.status === "drift" ? "var(--red)" : "var(--dim)"}">${f.psi.toFixed(2)}</text>`; });
+  const psi = card({ size: "wide", eyebrow: "White tick = this input's drift threshold", title: "Population stability by input", body: svg(w, top.length * rh + 4, g), foot: "Red crosses its threshold · amber above its normal range", open: () => driftModal() });
+  psi.classList.add("black");
+  const E = Dr.error_by_season || [];
+  const err = card({ size: "wide", eyebrow: "48h ahead, walk-forward", title: "Error season by season",
+    body: lineChart({ n: E.length, w: 460, h: 160, y0: 0, y1: Math.max(10, ...E.map(e => Math.max(e.mae, e.mae_persistence))) * 1.15, series: [{ v: E.map(e => e.mae_persistence), c: "#5a6069", dash: "4 3" }, { v: E.map(e => e.mae), c: "var(--ds)", dots: true, end: true }], xl: E.map((e, i) => [i, String(e.season)]) }),
+    foot: "Orange: Vayu · dashed: persistence. A rising orange line would mean the model is ageing.", open: null });
+  const L = Dr.live_error;
+  const live = card({ eyebrow: "Live, from the ledger", title: "Live error vs expected",
+    body: L ? `<div class="big num" style="color:${L.status === "drift" ? "var(--red)" : "var(--qa)"}">${L.mae}</div><p class="take">MAE over the last ${L.n} graded forecasts, vs ${L.expected} expected from the backtest (${L.ratio}×). Alert above 1.3×.</p>` : `<div class="big muted">–</div><p class="take">Starts once real forecasts are graded (two days after the first run). Alerts when live error runs 30% above the backtest.</p>`,
+    foot: "" });
+  live.classList.add("black");
+  const r = row({ id: "health", title: "Model health", role: "MLOps", c: "--red", sub: "Is the world still the one the model learned? Inputs are compared with the same days in earlier years, and live error with the backtest.", cards: [stc, psi, err, live] });
+  r.classList.add("alert");
+}
+function driftModal() {
+  const Dr = D.drift;
+  modal({ eyebrow: "MLOps · drift method", title: "How drift is judged",
+    body: `<p style="margin:0">The last ${Dr.window_days} issue days (${esc(Dr.current.join(" to "))}, n=${Dr.current_n}) are compared with ${esc(Dr.reference)} (n=${Dr.reference_n}). Matching the calendar keeps Delhi's normal winter swing from reading as drift.</p>
+      <p class="muted" style="margin:0">A 30-day window is always narrower than nine pooled years, so fixed PSI cut-offs would raise false alarms. Each earlier year's same window is scored against the other years to build a null distribution. An input drifts only when today's PSI beats that null's 90th percentile and the textbook 0.25.</p>
+      ${table(["feature", "psi", "null_p50", "threshold", "status", "ref_mean", "cur_mean"], Dr.features.map(f => ({ ...f, feature: FEAT[f.feature] || f.feature })), 40)}` });
+}
+
+/* ───────────── open data API ───────────── */
+function apiRow() {
+  const Cg = D.catalog; if (!Cg?.datasets) return;
+  const head = card({ eyebrow: "No key · no rate limit · rebuilt 06:00 IST", title: "Open data API",
+    body: `<div class="endpoint">${esc(location.origin)}/api/v1</div><p class="take">${Cg.datasets.length} JSON endpoints plus an OpenAPI 3.1 spec and a catalog with schemas, row counts and freshness.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="get">GET</span><span class="endpoint">/api/v1/openapi.json</span></div>`,
+    foot: "", open: () => modal({ eyebrow: "Open data", title: "OpenAPI spec", body: `<p class="muted" style="margin:0">Machine-readable spec for every endpoint. Import it into Postman or generate a client.</p><pre id="oas">Loading…</pre>`, after: b => fetch("api/v1/openapi.json").then(r => r.json()).then(j => $("#oas", b).textContent = JSON.stringify(j, null, 2).slice(0, 6000)).catch(() => $("#oas", b).textContent = "Couldn't load openapi.json") }) });
+  head.classList.add("black");
+  const cards = Cg.datasets.map(d => { const c = card({ eyebrow: `${esc(d.source)} · ${d.cadence}`, title: d.title,
+    body: `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="get">GET</span><span class="endpoint">${esc(d.endpoint)}</span></div><div class="stat-row"><div class="stat"><b class="num">${d.rows != null ? n0(d.rows) : "–"}</b><span>rows</span></div><div class="stat"><b class="num">${(d.bytes / 1024).toFixed(0)} KB</b><span>size</span></div><div class="stat"><b class="num" style="font-size:15px">${d.freshness ? d8(d.freshness) : "–"}</b><span>fresh to</span></div></div>`,
+    foot: `${(d.schema || []).length} columns`, open: () => apiModal(d) }); c.classList.add("black"); return c; });
+  row({ id: "api", title: "Open data", role: "Data Engineering", c: "--red", sub: "Everything behind this site, as versioned JSON anyone can use. Each dataset has a schema, row count and freshness stamp.", cards: [head, ...cards] });
+}
+function apiModal(d) {
+  const url = `${location.origin}${d.endpoint}`, curl = `curl -s ${url}`, js = `const res = await fetch("${url}");\nconst { rows } = await res.json();`;
+  modal({ eyebrow: `Open data · ${d.source}`, title: d.title,
+    body: `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="get">GET</span><span class="endpoint">${esc(d.endpoint)}</span></div><p style="margin:0">${esc(d.description)}</p>
+      ${(d.schema || []).length ? `<h3>Schema</h3>${table(["column_name", "column_type"], d.schema, 60)}` : ""}
+      <h3>Use it</h3><pre>${esc(curl)}</pre><pre>${esc(js)}</pre><div style="display:flex;gap:8px"><button class="btn small ghost" id="cpc">Copy curl</button><button class="btn small ghost" id="try">Try it</button></div><div id="tryout"></div>`,
+    after: b => {
+      $("#cpc", b).onclick = () => navigator.clipboard?.writeText(curl).then(() => $("#cpc", b).textContent = "Copied", () => {});
+      $("#try", b).onclick = () => fetch(d.endpoint.slice(1)).then(r => r.json()).then(j => { const rows = j.rows || j.forecast || j.entries || []; $("#tryout", b).innerHTML = rows.length ? table(Object.keys(rows[0]), rows.slice(-5)) + `<p class="dim" style="font-size:12px;margin:6px 0 0">Last 5 of ${rows.length} rows</p>` : `<pre>${esc(JSON.stringify(j, null, 2).slice(0, 2000))}</pre>`; }).catch(e => $("#tryout", b).innerHTML = `<p class="red-t">Request failed: ${esc(e.message)}</p>`);
+    } });
+}
+
+/* ───────────── search palette ───────────── */
+const search = (() => {
+  const P = $("#palette"), Q = $("#pal-q"), L = $("#pal-list");
+  let items = null, daily = null, sel = 0, shown = [];
+  const MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+  const mon = w => MON[w.slice(0, 4)] ?? MON[w.slice(0, 3)];
+  function parseDate(q) {
+    q = q.trim().toLowerCase(); let m;
+    if ((m = q.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return iso(+m[1], +m[2] - 1, +m[3]);
+    if ((m = q.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/))) return iso(+m[3], +m[2] - 1, +m[1]);
+    if ((m = q.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\s*,?\s*(\d{4})?$/)) && mon(m[2]) != null) return iso(+(m[3] || 0), mon(m[2]), +m[1]);
+    if ((m = q.match(/^([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(\d{4})?$/)) && mon(m[1]) != null) return iso(+(m[3] || 0), mon(m[1]), +m[2]);
+    return null;
+  }
+  function iso(y, mo, d) { if (mo == null || d < 1 || d > 31) return null; return { y, mo, d }; }
+  const pad = n => String(n).padStart(2, "0");
+  async function loadDaily() { if (daily) return daily; try { daily = (await (await fetch("api/v1/aqi/daily.json")).json()).rows; } catch { daily = []; } return daily; }
+  function build() {
+    const it = [], add = (group, label, sub, tag, run, sev = false) => it.push({ group, label, sub, tag, run, sev, hay: `${label} ${sub} ${tag} ${group}`.toLowerCase() });
+    (D.live?.stations_latest || []).forEach(s => add("Stations", s.station, `AQI ${n0(s.aqi)} · ${band(s.aqi)[1]}`, "station", () => modal({ eyebrow: "Station · latest full day", title: s.station, body: `<div class="big" style="color:var(${band(s.aqi)[2]})">${n0(s.aqi)}</div>${table(["station", "aqi", "pm25", "pm10", "hours"], [s])}` }), s.aqi > 400));
+    (D.findings || []).forEach(f => add("Findings", f.title, f.takeaway || "", "finding", () => openFinding(f)));
+    (D.agent?.results || []).forEach(r => add("Ask Vayu", r.question, r.category, "question", () => askModal(r)));
+    [["Severe day", "AQI above 400"], ["City AQI", "CPCB method"], ["Hit rate", "severe days warned"], ["False-alarm ratio", "warnings without severe day"], ["Coverage", "p10–p90 band"], ["Skill vs persistence", "error reduction"], ["Northwest wind share", "smoke corridor"], ["Upwind fire load", "VIIRS detections"]]
+      .forEach(([k, v]) => add("KPIs", k, v, "kpi", kpiModal, k === "Severe day"));
+    (D.ledger?.blocks || []).forEach((b, i, arr) => add("Ledger", `Block #${b.height}`, `${b.run_date} · ${b.n} forecasts · ${b.root.slice(0, 10)}…`, "block", () => verifyModal(b, arr[i - 1])));
+    (D.catalog?.datasets || []).forEach(d => add("Open data", d.endpoint, d.title, "GET", () => apiModal(d)));
+    Object.entries(D.pipeline?.latest?.stages || {}).forEach(([k, v]) => add("Pipeline", `Stage · ${k}`, `${v.status} · ${v.checks_passed}/${v.checks_total} checks · ${v.duration_s}s`, "stage", () => stageModal(k), v.status === "failed"));
+    (D.pipeline?.latest?.steps || []).forEach(s => add("Pipeline", s.step, `${s.stage} · ${s.status}`, "step", () => stageModal(s.stage), s.status === "failed"));
+    (D.drift?.features || []).forEach(f => add("Model health", FEAT[f.feature] || f.feature, `PSI ${f.psi} · ${f.status}`, "drift", driftModal, f.status === "drift"));
+    (D.arena?.horizons || []).forEach(h => add("Model arena", `Leaderboard +${h.horizon_h}h`, h.rows.map(r => r.model).join(", "), "arena", () => arenaModal(h)));
+    (D.lineage?.nodes || []).forEach(n => add("Lineage", n.label, `${n.layer}${n.rows != null ? " · " + n.rows.toLocaleString("en-IN") + " rows" : ""}`, "node", () => lineageModal(n, D.lineage.edges.filter(e => e.to === n.id).map(e => e.from), D.lineage.edges.filter(e => e.from === n.id).map(e => e.to)), n.status === "failed"));
+    [["What-if simulator", "#whatif"], ["GRAP decision desk", "#desk"], ["Live now", "#live"], ["Season replay", "#top"]].forEach(([l, h]) => add("Go to", l, "section", "jump", () => document.querySelector(h)?.scrollIntoView({ behavior: "smooth" })));
+    return it;
+  }
+  async function render() {
+    const q = Q.value.trim().toLowerCase(); items = items || build(); shown = [];
+    const dt = parseDate(q);
+    if (dt) { const rows = await loadDaily(); const cands = rows.filter(r => { const [y, mo, d] = r.date.split("-").map(Number); return mo - 1 === dt.mo && d === dt.d && (!dt.y || y === dt.y); }).slice(-8).reverse();
+      cands.forEach(r => shown.push({ group: "Days", label: dY(r.date), sub: `AQI ${r.aqi} · ${r.band}`, tag: "day", sev: r.aqi > 400, run: () => dayModal(r) }));
+      if (!cands.length) shown.push({ group: "Days", label: "No observations for that date", sub: `Data covers ${rows[0]?.date || "–"} to ${rows[rows.length - 1]?.date || "–"}`, tag: "", run: () => {} }); }
+    if (q) { const toks = q.split(/\s+/).filter(Boolean), per = {};
+      items.map(x => ({ x, s: toks.every(t => x.hay.includes(t)) ? (x.label.toLowerCase().startsWith(toks[0]) ? 2 : 1) + (x.sev ? .5 : 0) : 0 })).filter(o => o.s).sort((a, b) => b.s - a.s)
+        .forEach(({ x }) => { per[x.group] = (per[x.group] || 0) + 1; if (per[x.group] <= 6) shown.push(x); });
+      const best = (D.agent?.results || []).map(r => ({ r, s: toks.filter(t => r.question.toLowerCase().includes(t)).length })).sort((a, b) => b.s - a.s)[0];
+      shown.push({ group: "Ask Vayu", label: `Ask: “${Q.value.trim()}”`, sub: best?.s ? `Closest checked question: ${best.r.question}` : "Free-text questions go to the agent in the daily run", tag: "agent", run: () => best?.s ? askModal(best.r) : modal({ eyebrow: "Ask Vayu", title: Q.value.trim(), body: `<p class="muted" style="margin:0">Free-text questions are answered by the agent when it runs with an LLM (python -m vp ask "…"). This static site answers the 25 checked questions directly.</p>` }) });
+    } else {
+      items.filter(x => x.group === "Go to" || x.group === "Findings").forEach(x => shown.push(x));
+    }
+    sel = 0; let g = "", html = "";
+    shown.forEach((x, i) => { if (x.group !== g) { g = x.group; html += `<div class="pal-group">${esc(g)}</div>`; }
+      html += `<button type="button" class="pal-item" role="option" data-i="${i}" aria-selected="${i === sel}"><span><div>${esc(x.label)}</div><small>${esc(x.sub)}</small></span><span class="tag ${x.sev ? "sev" : ""}">${x.sev ? "● " : ""}${esc(x.tag)}</span></button>`; });
+    L.innerHTML = html || `<div class="pal-group">Nothing matched</div>`;
+    L.querySelectorAll(".pal-item").forEach(b => { b.onclick = () => go(+b.dataset.i); b.onmouseenter = () => mark(+b.dataset.i); });
+  }
+  function mark(i) { sel = i; L.querySelectorAll(".pal-item").forEach(b => b.setAttribute("aria-selected", +b.dataset.i === sel)); L.querySelector(`[data-i="${sel}"]`)?.scrollIntoView({ block: "nearest" }); }
+  function go(i) { const x = shown[i]; if (!x) return; P.close(); setTimeout(() => x.run(), 30); }
+  function open() { Q.value = ""; P.showModal(); Q.focus(); render(); }
+  function init() {
+    $("#search-btn").onclick = open;
+    addEventListener("keydown", e => {
+      const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) && document.activeElement !== Q;
+      if ((e.key === "/" && !typing && !P.open) || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")) { e.preventDefault(); open(); }
+    });
+    let t; Q.oninput = () => { clearTimeout(t); t = setTimeout(render, 80); };
+    Q.onkeydown = e => { if (e.key === "ArrowDown") { e.preventDefault(); mark(Math.min(shown.length - 1, sel + 1)); } if (e.key === "ArrowUp") { e.preventDefault(); mark(Math.max(0, sel - 1)); } if (e.key === "Enter") { e.preventDefault(); go(sel); } };
+    P.addEventListener("click", e => { if (e.target === P) P.close(); });
+  }
+  return { init, open };
+})();
+
+async function dayModal(r) {
+  const get = async p => { try { return (await (await fetch(p)).json()).rows || []; } catch { return []; } };
+  const [fires, wx, cams] = await Promise.all([get("api/v1/fires/daily.json"), get("api/v1/weather/daily.json"), get("api/v1/cams/daily.json")]);
+  const prev = d => { const t = new Date(d + "T00:00:00"); t.setDate(t.getDate() - 1); return t.toISOString().slice(0, 10); };
+  const f = fires.find(x => x.date === prev(r.date)), w = wx.find(x => x.date === r.date), c = cams.find(x => x.date === r.date);
+  const fc = (D.backtest?.h48 || []).find(x => String(x.target_date).slice(0, 10) === r.date);
+  const led = (D.ledger?.blocks || []).flatMap(b => (b.entries || []).map(e => JSON.parse(e.line))).filter(e => e.target_date === r.date);
+  const b = band(r.aqi), sev = r.aqi > 400;
+  modal({ eyebrow: `Delhi · ${new Date(r.date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long" })}`, title: dY(r.date),
+    body: `<div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap"><span class="big num" style="font-size:56px;color:${sev ? "var(--red)" : `var(${b[2]})`}">${n0(r.aqi)}</span><span style="font-weight:600;font-size:18px">${b[1]}</span>${sev ? `<span class="get">SEVERE</span>` : ""}<span class="muted">GRAP ${esc(r.grap || "–")} · ${r.n_stations} stations</span></div>
+      <div class="stat-row" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+        <div class="stat"><b class="num">${r.pm25 ?? "–"}</b><span>PM2.5 µg/m³</span></div>
+        <div class="stat"><b class="num" style="color:var(--ds)">${f ? n0(f.fires) : "–"}</b><span>upwind fires the day before</span></div>
+        <div class="stat"><b class="num">${w ? pct(w.nw_frac) : "–"}</b><span>hours of northwest wind</span></div>
+        <div class="stat"><b class="num">${w?.blh_min != null ? n0(w.blh_min) + " m" : "–"}</b><span>night mixing height</span></div>
+        <div class="stat"><b class="num">${c ? n0(c.aqi_equiv) : "–"}</b><span>CAMS said</span></div>
+      </div>
+      <div class="card black" style="width:auto;cursor:default"><div class="eyebrow">What the model said 48 hours before</div>
+        ${fc ? `<div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap"><span class="big num" style="color:var(${band(fc.p50)[2]})">${n0(fc.p50)}</span><span class="num muted">range ${n0(fc.p10)}–${n0(fc.p90)} · P(severe) ${pct(fc.p_severe)}</span><span class="mono ${Math.abs(fc.p50 - r.aqi) > 60 ? "red-t" : "ok-t"}">off by ${n0(Math.abs(fc.p50 - r.aqi))}</span></div><p class="dim" style="margin:0;font-size:12px">Walk-forward backtest: the model for this season never saw it.</p>`
+          : led.length ? table(["source", "horizon_h", "p10", "p50", "p90", "p_severe"], led) : `<p class="muted" style="margin:0">No forecast on record for this date. Backtests cover October–November; the ledger covers days since launch.</p>`}
+      </div>` });
+}
+
 })();
