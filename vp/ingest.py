@@ -28,6 +28,7 @@ import requests
 
 from . import config as C
 from .geo import assign_state
+from .runner import Check
 
 UA = {"User-Agent": "vayu-pramaan/1.0 (open air-quality research project)"}
 SESSION = requests.Session()
@@ -270,7 +271,15 @@ def aqi_opencity(res) -> pd.DataFrame:
 
 def aqi_openaq_recent(res, days: int = 10) -> pd.DataFrame:
     """Recent days from the OpenAQ open archive (no key). Used for live grading."""
-    jobs = [(lid, date.today() - timedelta(days=k)) for lid in OPENAQ_DELHI for k in range(1, days + 1)]
+    return aqi_openaq(res, date.today() - timedelta(days=days), date.today() - timedelta(days=1),
+                      f"openaq_recent_{date.today():%Y%m%d}")
+
+
+def aqi_openaq(res, start: date, end: date, name: str) -> pd.DataFrame:
+    """Daily files from the OpenAQ open archive (no key) for every Delhi location, start..end inclusive.
+    History mode uses it to fill the gap between the last CPCB station export and today."""
+    n = (end - start).days + 1
+    jobs = [(lid, start + timedelta(days=k)) for lid in OPENAQ_DELHI for k in range(max(n, 0))]
 
     def one(job):
         lid, d = job
@@ -284,7 +293,8 @@ def aqi_openaq_recent(res, days: int = 10) -> pd.DataFrame:
     with ThreadPoolExecutor(8) as ex:
         frames = [f for f in ex.map(one, jobs) if f is not None]
     if not frames:
-        raise RuntimeError("no recent OpenAQ archive files found (archive may lag 1-2 days)")
+        raise RuntimeError(f"no OpenAQ archive files found for {start}..{end} (archive may lag 1-2 days)")
+    res.checks.append(Check("OpenAQ daily files found", True, f"{len(frames)}/{len(jobs)}", "warn"))
     raw = pd.concat(frames, ignore_index=True)
     raw = raw[raw["parameter"].isin(["pm25", "pm10"])]
     raw["ts"] = pd.to_datetime(raw["datetime"], utc=True).dt.tz_convert("Asia/Kolkata").dt.tz_localize(None).dt.floor("h")
@@ -296,7 +306,7 @@ def aqi_openaq_recent(res, days: int = 10) -> pd.DataFrame:
             df[c] = pd.NA
     df["aqi"] = np.nan
     df = df[["station", "ts", "pm25", "pm10", "aqi"]]
-    _save(df, "aqi", f"openaq_recent_{date.today():%Y%m%d}")
+    _save(df, "aqi", name)
     return df
 
 

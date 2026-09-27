@@ -43,11 +43,17 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
                     ctx["cams_fc"] = pd.read_parquet(fc_files[-1])
         elif mode == "history":
             yrs = list(range(int(C.HISTORY_START[:4]), today.year + 1))
+            gap_from = None
             with R.step("ingest", "fires · FIRMS VIIRS archive") as r:
                 df = ingest.fires_history(r, yrs); r.rows_out = len(df); r.freshness = ingest.latest_ts(df, "date")
                 r.notes += f"state split: {geo.boundary_mode()}"
             with R.step("ingest", "station AQI · CPCB via OpenCity") as r:
                 df = ingest.aqi_opencity(r); r.rows_out = len(df); r.freshness = ingest.latest_ts(df, "ts")
+                gap_from = (pd.Timestamp(df.ts.max()).date() + timedelta(days=1)) if len(df) else None
+            if gap_from and gap_from < today - timedelta(days=10):
+                with R.step("ingest", "station AQI · OpenAQ archive (gap after CPCB export)") as r:
+                    df = ingest.aqi_openaq(r, gap_from, today - timedelta(days=1), "openaq_gap")
+                    r.rows_out = len(df); r.freshness = ingest.latest_ts(df, "ts")
             with R.step("ingest", "weather · Open-Meteo archive") as r:
                 df = ingest.weather_history(r, C.HISTORY_START, str(today - timedelta(days=2)))
                 r.rows_out = len(df); r.freshness = ingest.latest_ts(df, "ts")

@@ -51,6 +51,14 @@ def provider() -> tuple[str, str, str] | None:
     return None
 
 
+_last_call = [0.0]
+
+
+def _min_gap() -> float:
+    """GitHub Models' free tier allows ~15 requests a minute; pace calls rather than hit 429s."""
+    return 4.2 if (p := provider()) and "github.ai" in p[0] else 0.0
+
+
 def llm(system: str, user: str, json_mode: bool = False) -> str:
     p = provider()
     if not p:
@@ -60,12 +68,41 @@ def llm(system: str, user: str, json_mode: bool = False) -> str:
                                                            {"role": "user", "content": user}]}
     if json_mode:
         body["response_format"] = {"type": "json_object"}
-    for i in range(3):
-        r = requests.post(url, json=body, headers={"Authorization": f"Bearer {key}"}, timeout=60)
+    err = ""
+    for i in range(4):
+        wait = _last_call[0] + _min_gap() - time.monotonic()
+        if wait > 0:
+            time.sleep(wait)
+        _last_call[0] = time.monotonic()
+        try:
+            r = requests.post(url, json=body, headers={"Authorization": f"Bearer {key}", "Accept": "application/json"}, timeout=60)
+        except requests.RequestException as e:
+            err = f"network: {e}"; time.sleep(2 ** i); continue
         if r.status_code == 200:
-            return r.json()["choices"][0]["message"]["content"]
-        time.sleep(2 ** i)
-    raise RuntimeError(f"LLM call failed: {r.status_code} {r.text[:200]}")
+            try:
+                content = r.json()["choices"][0]["message"]["content"] or ""
+            except (ValueError, KeyError, IndexError):
+                err = f"200 but unreadable body: {r.text[:160]!r}"; time.sleep(2 ** i); continue
+            if content.strip():
+                return content
+            err = "empty completion"; time.sleep(2 ** i); continue
+        err = f"{r.status_code} {r.text[:200]}"
+        retry = r.headers.get("retry-after")
+        time.sleep(min(float(retry), 60) if retry and retry.replace(".", "").isdigit() else 2 ** (i + 1))
+    raise RuntimeError(f"LLM call failed: {err}")
+
+
+def parse_json(text: str) -> dict:
+    """Models sometimes wrap JSON in ```json fences or add a sentence; take the outermost object."""
+    t = text.strip()
+    t = re.sub(r"^```(?:json)?\s*|\s*```$", "", t)
+    try:
+        return json.loads(t)
+    except ValueError:
+        a, b = t.find("{"), t.rfind("}")
+        if a >= 0 and b > a:
+            return json.loads(t[a:b + 1])
+        raise ValueError(f"model did not return JSON: {text[:120]!r}")
 
 
 def guard(sql: str) -> str:
@@ -98,14 +135,14 @@ def to_rows(df: pd.DataFrame, n: int = 50) -> list[dict]:
 
 def ask(con, question: str) -> dict:
     steps, t0 = [], time.perf_counter()
-    plan = json.loads(llm(SYSTEM, question, json_mode=True))
+    plan = parse_json(llm(SYSTEM, question, json_mode=True))
     steps.append("write_sql")
     sql = plan["sql"]
     try:
         df = run_sql(con, sql)
     except Exception as e:  # one repair attempt with the error message
         steps.append("repair")
-        plan = json.loads(llm(SYSTEM, f"{question}\nYour previous SQL failed with: {e}\nSQL was: {sql}", json_mode=True))
+        plan = parse_json(llm(SYSTEM, f"{question}\nYour previous SQL failed with: {e}\nSQL was: {sql}", json_mode=True))
         sql = plan["sql"]
         df = run_sql(con, sql)
     steps.append("run")

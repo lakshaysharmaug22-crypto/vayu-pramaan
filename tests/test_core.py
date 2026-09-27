@@ -111,3 +111,9 @@ def test_station_names_match_across_series():
     from vp.ingest import station_key
     assert station_key("ihbas-dilshad-garden-cpcb-aqi-data-2017-2023") == station_key("ihbas-cpcb-15-minute-aqi-data-for-2024-25")
     assert station_key("okhla-phase-2-dpcc-aqi-data-2017-2023") == station_key("Okhla Phase 2 15 minute AQI Data for 2024-25")
+
+
+def test_parse_json_tolerates_fences_and_prose():
+    from vp.agent import parse_json
+    assert parse_json('```json\n{"sql": "select 1"}\n```')["sql"] == "select 1"
+    assert parse_json('Sure: {"sql": "select 2", "why": "x"} hope that helps')["sql"] == "select 2"
