@@ -55,7 +55,7 @@ def write_all(ctx: dict, run) -> int:
         "forecast": _df(fc.drop(columns=["aqi_0"], errors="ignore")),
         "explain": ctx["explain"], "importance": ctx["importance"],
         "grap_call": ctx["grap_call"], "brief": ctx["brief"],
-        "synthetic": C.SYNTHETIC,
+        "issued_on": ctx.get("issued_on"), "synthetic": C.SYNTHETIC,
     })
 
     # live: last 7 days hourly + stations + fires

@@ -27,7 +27,9 @@ NW_DIR_MIN, NW_DIR_MAX = 270, 340
 HISTORY_START = "2017-01-01"
 SEASON_MONTHS = (10, 11)          # Oct-Nov burning season
 BACKTEST_SEASONS = list(range(2019, 2026))
-HORIZONS_H = (24, 48, 72)
+# Lead time counts from the latest verified observation. The public archive lags 1-3 days, so the
+# model trains out to 6 days and the site shows the first three targets that are still in the future.
+HORIZONS_H = (24, 48, 72, 96, 120, 144)
 
 # CPCB AQI categories and GRAP stages (CAQM)
 AQI_BANDS = [(0, 50, "Good"), (51, 100, "Satisfactory"), (101, 200, "Moderate"),

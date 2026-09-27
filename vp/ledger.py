@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -72,9 +72,17 @@ def _chain() -> list[dict]:
     return [json.loads(l) for l in CHAIN.read_text().splitlines() if l.strip()]
 
 
+def today_ist() -> str:
+    return (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d")
+
+
 def commit(rows: list[dict], run_date: str, model_version: str) -> dict:
     """Append one block. Refuses to rewrite a date that is already committed."""
     chain = _chain()
+    today = today_ist()
+    late = [r for r in rows if str(r["target_date"])[:10] <= today]
+    if late:
+        raise RuntimeError(f"refusing to commit {len(late)} row(s) for dates that are not in the future ({today} IST)")
     if any(b["run_date"] == run_date for b in chain):
         raise RuntimeError(f"{run_date} already committed; the ledger is append-only")
     path = ENTRIES / f"{run_date}.jsonl"

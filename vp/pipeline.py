@@ -105,7 +105,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     with R.step("features", "daily frame") as r:
         daily = features.daily_frame(con); r.rows_out = len(daily)
     with R.step("features", "feature table (t0 → t0+h)") as r:
-        feats = features.build(daily); r.rows_out = len(feats)
+        feats = features.build(daily, tuple(h // 24 for h in C.HORIZONS_H)); r.rows_out = len(feats)
         miss = feats[features.FEATURES].isna().mean().max()
         r.checks.append(Check("max feature null share < 30%", miss < 0.3, f"{miss:.1%}", "warn"))
         con.register("feats_df", feats)
@@ -129,17 +129,25 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
         r.checks.append(Check("80% band covers 70–90%", 0.7 <= (o.get("coverage_80") or 0) <= 0.9,
                               f"coverage={o.get('coverage_80')}", "warn"))
     with R.step("model", "live forecast (train on all history)") as r:
-        fc, expl, imps = model.live_forecast(feats); r.rows_out = len(fc)
-        ctx |= {"forecast": fc, "explain": expl, "importance": imps}
-        r.freshness = str(fc.issue_date.max())[:10]
+        fc_all, expl, imps = model.live_forecast(feats); r.rows_out = len(fc_all)
+        # Only targets that are still in the future count as forecasts (the archive lags 1-3 days).
+        issued = pd.Timestamp(ledger.today_ist())
+        fc = fc_all[fc_all.target_date > issued].sort_values("horizon_h").head(3)
+        r.checks.append(Check("three future targets", len(fc) == 3,
+                              f"obs to {str(fc_all.issue_date.max())[:10]}, issued {issued:%Y-%m-%d}", "warn"))
+        if not len(fc):
+            fc = fc_all.sort_values("horizon_h").tail(3)
+        ctx |= {"forecast": fc, "forecast_all": fc_all, "explain": expl, "importance": imps,
+                "issued_on": f"{issued:%Y-%m-%d}"}
+        r.freshness = str(fc_all.issue_date.max())[:10]
 
     if R.failed:
         return _halt(R, "model")
 
     # ───────── 6 · ledger ─────────
     with R.step("ledger", "commit forecasts") as r:
-        run_date = str(fc.issue_date.max())[:10]
-        rows = [{"source": "vayu", "issue_date": run_date, "target_date": str(x.target_date)[:10],
+        run_date, obs_date = ctx["issued_on"], str(fc.issue_date.max())[:10]
+        rows = [{"source": "vayu", "issue_date": run_date, "obs_date": obs_date, "target_date": str(x.target_date)[:10],
                  "horizon_h": int(x.horizon_h), "p10": float(x.p10), "p50": float(x.p50), "p90": float(x.p90),
                  "p_severe": float(x.p_severe)} for x in fc.itertuples()]
         cams = ctx.get("cams_fc")
@@ -151,9 +159,10 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
                 cams = None  # stale snapshot: don't pair it with today's forecast
         if cams is not None and len(cams):
             cd = cams.assign(date=cams.ts.dt.date).groupby("date")[["pm25", "pm10"]].mean().reset_index()
+            targets = {str(t)[:10] for t in fc.target_date}
             for x in cd.itertuples():
-                h = (pd.Timestamp(x.date) - pd.Timestamp(run_date)).days * 24
-                if h in C.HORIZONS_H:
+                h = (pd.Timestamp(x.date) - pd.Timestamp(str(cams.issued.iloc[0])[:10])).days * 24
+                if str(x.date) in targets:
                     aqi = con.execute("select round(greatest(si_pm25(?), coalesce(si_pm10(?),0)))", [x.pm25, x.pm10]).fetchone()[0]
                     rows.append({"source": "cams", "issue_date": run_date, "target_date": str(x.date),
                                  "horizon_h": h, "p50": float(aqi)})
@@ -179,7 +188,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
         ctx["decision"] = insights.decision_table(bt)
         ctx["grap_call"] = insights.grap_call(fc, 0.3); r.rows_out = len(ctx["decision"].get("thresholds", []))
     with R.step("insights", "what-if grid (live models)") as r:
-        ctx["whatif"] = extras.whatif_grid()
+        ctx["whatif"] = extras.whatif_grid({int(h) for h in ctx["forecast"].horizon_h})
         r.rows_out = sum(len(v["grid"]) for v in ctx["whatif"]["horizons"].values())
     with R.step("insights", "model arena") as r:
         ctx["arena"] = extras.arena(con, bt); r.rows_out = sum(len(h["rows"]) for h in ctx["arena"].get("horizons", []))

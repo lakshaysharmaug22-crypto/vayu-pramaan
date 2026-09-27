@@ -117,3 +117,11 @@ def test_parse_json_tolerates_fences_and_prose():
     from vp.agent import parse_json
     assert parse_json('```json\n{"sql": "select 1"}\n```')["sql"] == "select 1"
     assert parse_json('Sure: {"sql": "select 2", "why": "x"} hope that helps')["sql"] == "select 2"
+
+
+def test_ledger_refuses_past_targets(tmp_path):
+    from vp import ledger
+    ledger.use_dir(tmp_path)
+    past = {"source": "vayu", "issue_date": "2020-01-01", "target_date": "2020-01-02", "horizon_h": 24, "p50": 100.0}
+    with pytest.raises(RuntimeError, match="not in the future"):
+        ledger.commit([past], "2020-01-01", "test")

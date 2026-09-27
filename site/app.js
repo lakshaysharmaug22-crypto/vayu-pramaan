@@ -138,9 +138,9 @@ function hero() {
   const b = band(t.p50), call = o.grap_call, head = D.ledger?.blocks?.slice(-1)[0];
   $("#hero").style.setProperty("--band", `var(${b[2]})`);
   $("#hero").innerHTML = `
-    <div class="eyebrow" style="color:var(--ds)">Forecast · issued ${dY(t.issue_date)}</div>
+    <div class="eyebrow" style="color:var(--ds)">Forecast · issued ${dY(o.issued_on || t.issue_date)}</div>
     <h1>${d8(t.target_date)}: AQI <span class="aqi num">${n0(t.p50)}</span><br><span style="font-size:.62em;color:var(--band)">${b[1]}</span></h1>
-    <p class="sub">80% range <b class="num">${n0(t.p10)}–${n0(t.p90)}</b>. ${pct(t.p_severe)} chance of a severe day (AQI above 400). Committed to the public ledger before the day happens.</p>
+    <p class="sub">80% range <b class="num">${n0(t.p10)}–${n0(t.p90)}</b>. ${pct(t.p_severe)} chance of a severe day (AQI above 400). Committed to the public ledger before the day happens. <span class="dim">Built on station data to ${d8(t.issue_date)}: the open archive runs ${Math.max(0, Math.round((new Date(o.issued_on || t.issue_date) - new Date(t.issue_date)) / 864e5))} day(s) behind, so this is a ${t.horizon_h}-hour lead.</span></p>
     <div class="chips">
       ${f.slice(1).map(x => { const bb = band(x.p50); return `<span class="chip" style="color:var(${bb[2]})"><i></i><span style="color:var(--text)">${d8(x.target_date)} · ${n0(x.p50)}</span></span>`; }).join("")}
       <span class="chip" style="color:${call?.act ? "var(--vpoor)" : "var(--qa)"}"><i></i><span style="color:var(--text)">GRAP: ${esc(call?.stage || "Hold")}</span></span>

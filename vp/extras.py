@@ -18,7 +18,7 @@ BLH_MULT = [0.5, 0.75, 1, 1.25, 1.5]
 FIRE_COLS = ["fires_0", "fires_1", "fires_2", "fires_sum3", "fires_trend", "frp_0"]
 
 
-def whatif_grid() -> dict:
+def whatif_grid(horizons: set[int] | None = None) -> dict:
     """Re-run the live models on perturbed copies of today's inputs.
 
     This shows how the model responds to each lever. It is not a causal estimate: the model
@@ -26,6 +26,8 @@ def whatif_grid() -> dict:
     """
     out = {"axes": {"fire_mult": FIRE_MULT, "nw": NW_LEVELS, "blh_mult": BLH_MULT}, "horizons": {}}
     for h, (models, x) in sorted(model.LIVE.items()):
+        if horizons and h not in horizons:
+            continue
         base = x.iloc[[0]]
         rows = []
         for fm, nw, bm in itertools.product(FIRE_MULT, NW_LEVELS, BLH_MULT):
