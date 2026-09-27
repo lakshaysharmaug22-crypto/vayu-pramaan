@@ -184,8 +184,9 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     con.close()
     ro = agent.readonly_con()
     with R.step("insights", "daily AI brief") as r:
+        ctx["brief"] = {"text": "", "generated_by": "skipped"}  # export still runs if the brief fails
         facts = insights.brief_facts(ro, fc, expl)
-        ctx["brief"] = agent.brief(facts) if with_llm else {"text": "", "generated_by": "skipped"}
+        ctx["brief"] = agent.brief(facts) if with_llm else ctx["brief"]
         ctx["brief"]["facts"] = facts
         if "template" in ctx["brief"]["generated_by"]:
             r.status = "warn"

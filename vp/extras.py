@@ -123,9 +123,10 @@ def drift(feats: pd.DataFrame, bt: pd.DataFrame, graded: pd.DataFrame | None, wi
     other years; a feature only counts as drift when today's PSI beats the 90th percentile of
     that null (and the textbook 0.25 floor).
     """
-    f = feats[feats.horizon_h == 24].copy()
+    f = feats[feats.horizon_h == 24].sort_values("issue_date").copy()
     last = f.issue_date.max()
-    cur = f[f.issue_date > last - pd.Timedelta(days=window)]
+    # last `window` observed issue days (recent days can be sparse once the station archive ends)
+    cur = f.tail(window)
     d0, d1 = int(cur.issue_date.dt.dayofyear.min()), int(cur.issue_date.dt.dayofyear.max())
     fd = f.issue_date.dt.dayofyear
     in_win = (fd >= d0) & (fd <= d1) if d0 <= d1 else ((fd >= d0) | (fd <= d1))

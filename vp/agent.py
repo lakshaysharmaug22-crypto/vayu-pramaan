@@ -110,7 +110,7 @@ def ask(con, question: str) -> dict:
         df = run_sql(con, sql)
     steps.append("run")
     rows = to_rows(df)
-    answer = llm(EXPLAIN, f"Question: {question}\nRows: {json.dumps(rows)[:6000]}")
+    answer = llm(EXPLAIN, f"Question: {question}\nRows: {json.dumps(rows, default=str)[:6000]}")
     steps.append("explain")
     return {"question": question, "sql": sql, "why": plan.get("why", ""), "columns": list(df.columns),
             "rows": rows, "answer": answer, "steps": steps, "latency_s": round(time.perf_counter() - t0, 2)}
@@ -119,7 +119,7 @@ def ask(con, question: str) -> dict:
 def brief(facts: dict) -> dict:
     prompt = ("Write a 3-paragraph daily brief (max 110 words) about tomorrow and the next 3 days of Delhi air. "
               "Paragraph 1: the headline forecast with its range and P(severe). Paragraph 2: the drivers, citing the "
-              "numbers given. Paragraph 3: confidence and what could change it. Only use these facts:\n" + json.dumps(facts))
+              "numbers given. Paragraph 3: confidence and what could change it. Only use these facts:\n" + json.dumps(facts, default=str))
     try:
         return {"text": llm(EXPLAIN, prompt), "generated_by": provider()[2]}
     except Exception as e:
