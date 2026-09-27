@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-27T22:23:22+00:00",
+ "generated_at": "2026-09-27T22:45:03+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -8,8 +8,8 @@
    "description": "CPCB method: mean of station AQIs (PM2.5 + PM10 sub-indices, \u226516 valid hours).",
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
-   "rows": 3557,
-   "freshness": "2026-09-27",
+   "rows": 3258,
+   "freshness": "2026-09-24",
    "schema": [
     {
      "column_name": "date",
@@ -40,7 +40,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 375825,
+   "bytes": 343352,
    "license": "Open data; attribute the original source"
   },
   {
@@ -50,8 +50,8 @@
    "description": "One row per reporting station.",
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
-   "rows": 11,
-   "freshness": "2026-09-27",
+   "rows": 1,
+   "freshness": "2026-09-24",
    "schema": [
     {
      "column_name": "station",
@@ -78,7 +78,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 1260,
+   "bytes": 174,
    "license": "Open data; attribute the original source"
   },
   {
@@ -112,7 +112,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 296450,
+   "bytes": 298508,
    "license": "Open data; attribute the original source"
   },
   {
@@ -122,8 +122,8 @@
    "description": "Delhi wind, northwest-wind share (Delhi and Ludhiana), mixing height, temperature, humidity, rain.",
    "source": "Open-Meteo",
    "cadence": "daily",
-   "rows": 3557,
-   "freshness": "2026-09-27",
+   "rows": 3561,
+   "freshness": "2026-10-01",
    "schema": [
     {
      "column_name": "date",
@@ -166,7 +166,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 562230,
+   "bytes": 558600,
    "license": "Open data; attribute the original source"
   },
   {
@@ -176,8 +176,8 @@
    "description": "CAMS PM2.5/PM10 converted with the same CPCB method.",
    "source": "Copernicus CAMS via Open-Meteo",
    "cadence": "daily",
-   "rows": 1519,
-   "freshness": "2026-09-27",
+   "rows": 1518,
+   "freshness": "2026-09-26",
    "schema": [
     {
      "column_name": "date",
@@ -196,7 +196,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 93962,
+   "bytes": 94940,
    "license": "Open data; attribute the original source"
   },
   {
@@ -209,7 +209,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 616,
+   "bytes": 618,
    "license": "Open data"
   },
   {
@@ -222,7 +222,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 114,
+   "bytes": 660,
    "license": "Open data"
   },
   {
@@ -235,7 +235,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 4030,
+   "bytes": 4016,
    "license": "Open data"
   }
  ]
