@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+data/vayu.duckdb*
+data/models/
+data/raw/aqi_opencity/
+data/raw/fires_manual/
+data/synthetic/
+.pytest_cache/
+.vercel

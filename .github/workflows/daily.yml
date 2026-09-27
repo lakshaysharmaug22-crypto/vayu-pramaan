@@ -1,0 +1,53 @@
+name: daily-forecast
+
+# 06:00 IST every day: pull fresh data, forecast, commit to the public ledger, publish site JSON.
+on:
+  schedule:
+    - cron: "30 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  models: read   # GitHub Models (free LLM for the daily brief + agent eval via GITHUB_TOKEN)
+
+concurrency:
+  group: daily-forecast
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Pipeline (ingest → export)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+        run: python -m vp run --mode daily
+
+      - name: Verify ledger chain
+        run: python -m vp verify
+
+      - name: Timestamp today's ledger entries (OpenTimestamps, Bitcoin-anchored)
+        continue-on-error: true
+        run: |
+          pip install opentimestamps-client
+          f=$(ls -t ledger/entries/*.jsonl | head -1)
+          ots stamp "$f"
+          for p in ledger/entries/*.ots; do ots upgrade "$p" || true; done
+
+      - name: Commit ledger + site data
+        run: |
+          git config user.name "vayu-pramaan-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add ledger site/data data/runs data/raw
+          git diff --cached --quiet || git commit -m "forecast $(date -u +%F): ledger block + site data"
+          git push

@@ -1,0 +1,54 @@
+name: nomad-qa
+
+# After every successful Vercel deploy: Nomad Loop Engine explores the live site like a user,
+# writes data/nomad-report.json (see docs/nomad-report.schema.json), and blocks on a critical bug.
+on:
+  deployment_status:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  qa:
+    if: github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: lakshaysharmaug22-crypto/nomad-loop-engine
+          path: nomad
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # TODO(on PC): replace with Nomad's real install + run commands once its CLI is confirmed.
+      - name: Run Nomad Loop against the deployment
+        env:
+          TARGET_URL: ${{ github.event.deployment_status.environment_url }}
+        run: |
+          cd nomad
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run nomad -- --url "$TARGET_URL" --flows ../docs/nomad-flows.json --out ../data/nomad-report.json
+
+      - name: Publish report to the site
+        run: |
+          cp data/nomad-report.json site/data/nomad.json
+          git config user.name "nomad-loop-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/nomad-report.json site/data/nomad.json
+          git diff --cached --quiet || git commit -m "nomad: QA report for ${{ github.sha }}"
+          git push
+
+      - name: Block release on a critical bug
+        run: |
+          python - <<'EOF'
+          import json, sys
+          r = json.load(open("data/nomad-report.json"))
+          crit = [b for b in r.get("bugs", []) if b.get("severity") == "critical" and b.get("status") != "fixed"]
+          print(f"verdict={r.get('verdict')} critical={len(crit)}")
+          sys.exit(1 if crit or r.get("verdict") == "blocked" else 0)
+          EOF

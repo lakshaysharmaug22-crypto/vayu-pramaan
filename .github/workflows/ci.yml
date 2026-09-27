@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      - name: Unit tests (ledger tamper detection, SQL guard, CPCB breakpoints)
+        run: python -m pytest -q tests
+      - name: Full pipeline on synthetic data
+        run: python -m vp run --synthetic --mode history --no-llm
+      - name: Real ledger still verifies
+        run: python -m vp verify

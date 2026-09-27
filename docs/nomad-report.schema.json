@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "nomad-report.json — contract between Nomad Loop Engine and Vayu Pramaan",
+  "description": "Written by Nomad after each run against the deployed site. Both projects' UIs read this same file.",
+  "type": "object",
+  "required": ["status", "run_id", "finished", "target_url", "verdict", "flows"],
+  "properties": {
+    "status": { "enum": ["complete", "error"] },
+    "run_id": { "type": "string" },
+    "finished": { "type": "string", "format": "date-time" },
+    "target_url": { "type": "string" },
+    "commit": { "type": "string", "description": "Vayu Pramaan commit SHA that was deployed" },
+    "verdict": { "enum": ["ship", "blocked"] },
+    "duration_s": { "type": "number" },
+    "flows": { "type": "array", "items": { "type": "object", "required": ["name", "status"],
+      "properties": { "name": { "type": "string" }, "status": { "enum": ["pass", "fail"] },
+                      "steps": { "type": "integer" }, "duration_s": { "type": "number" } } } },
+    "bugs": { "type": "array", "items": { "type": "object", "required": ["title", "severity"],
+      "properties": { "id": { "type": "string" }, "title": { "type": "string" },
+                      "severity": { "enum": ["critical", "major", "minor"] }, "status": { "enum": ["open", "fixed", "verified"] },
+                      "repro": { "type": "array", "items": { "type": "string" } }, "issue_url": { "type": "string" } } } },
+    "history": { "type": "array", "items": { "type": "object",
+      "properties": { "run_id": { "type": "string" }, "verdict": { "enum": ["ship", "blocked"] },
+                      "flows_passed": { "type": "integer" }, "flows_total": { "type": "integer" }, "duration_s": { "type": "number" } } } }
+  }
+}

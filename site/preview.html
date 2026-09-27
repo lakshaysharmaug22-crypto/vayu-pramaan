@@ -1,0 +1,29 @@
+<title>Vayu Pramaan</title>
+<meta name="description" content="Delhi air-quality forecasts committed to a public ledger before the outcome, then graded in the open.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+<header class="top">
+  <a class="logo" href="#top" aria-label="Vayu Pramaan home"><b>Vayu Pramaan</b><span>वायु प्रमाण</span></a>
+  <nav class="nav" aria-label="Sections">
+    <a href="#forecast">Forecast</a><a href="#findings">Findings</a><a href="#desk">Decision desk</a>
+    <a href="#ask">Ask Vayu</a><a href="#live">Live</a><a href="#pipeline">Pipeline</a><a href="#ledger">Ledger</a><a href="#nomad">QA</a>
+  </nav>
+  <div class="status" id="status"><i class="dot"></i><span>Loading…</span></div>
+</header>
+<div id="banner"></div>
+<section class="hero" id="top" aria-label="Today's forecast">
+  <canvas id="map" aria-label="Map of farm fires in Punjab and Haryana with wind flowing toward Delhi"></canvas>
+  <div class="hero-shade"></div>
+  <div class="legend"><span><i style="background:#FF7A45"></i>Fire detection</span><span><i style="background:#9fb3c8"></i>Wind flow</span><span><i style="background:#fff"></i>Delhi</span></div>
+  <div class="hero-body" id="hero"><p class="skeleton">Loading today's forecast…</p></div>
+  <div class="replay" id="replay" hidden></div>
+</section>
+<main id="rows"></main>
+<footer>
+  <span>Vayu Pramaan · open forecasting observatory for Delhi air · release-gated by <a href="https://github.com/lakshaysharmaug22-crypto/nomad-loop-engine">Nomad Loop Engine</a></span>
+  <span class="mono">NASA FIRMS · CPCB · Open-Meteo · Copernicus CAMS</span>
+</footer>
+<dialog id="modal" aria-labelledby="m-title"><div class="m-head"><div><div class="eyebrow" id="m-eyebrow"></div><h2 id="m-title"></h2></div><button class="m-close" id="m-close" aria-label="Close">×</button></div><div class="m-body" id="m-body"></div></dialog>
+<script src="app.js"></script>

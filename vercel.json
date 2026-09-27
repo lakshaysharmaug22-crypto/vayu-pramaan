@@ -1,0 +1,10 @@
+{
+  "$comment": "Vercel serves the static site from /site. The daily GitHub Action commits fresh site/data/*.json, which triggers a redeploy.",
+  "outputDirectory": "site",
+  "buildCommand": "",
+  "installCommand": "",
+  "framework": null,
+  "headers": [
+    { "source": "/data/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }] }
+  ]
+}
