@@ -59,12 +59,12 @@ Synthetic runs live in `data/synthetic/` and never touch real data or the public
 
 Other commands: `python -m vp verify` · `python -m vp ask "Which week in 2024 had the worst smog?"` · `python -m vp eval`
 
-**LLM (brief + agent):** any one of `GROQ_API_KEY`, `GEMINI_API_KEY`, or `GITHUB_TOKEN` (GitHub Models, free inside Actions).
+**LLM (brief + agent):** `GROQ_API_KEY` or `GEMINI_API_KEY` (both have free tiers). Without one, the brief falls back to a template and the agent eval is skipped. GitHub Models was retired on 30 July 2026.
 
 ## Deploy
 
 1. Push to GitHub. Add the repo on Vercel; `vercel.json` serves `/site`.
-2. Repo secrets (optional): `GROQ_API_KEY`, `FIRMS_MAP_KEY`.
+2. Repo secrets (optional): `GROQ_API_KEY` or `GEMINI_API_KEY`, `FIRMS_MAP_KEY`.
 3. Workflows: `daily.yml` (forecast + ledger), `ci.yml` (tests + synthetic pipeline), `nomad-qa.yml` (QA after each deploy).
 
 ## Results

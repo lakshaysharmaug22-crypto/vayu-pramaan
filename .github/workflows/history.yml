@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  models: read
 
 jobs:
   backfill:
@@ -28,7 +27,8 @@ jobs:
           for f in $(ls data/raw/aqi_opencity/*.csv | head -2); do echo "== $f"; head -3 "$f"; done
       - name: Pipeline (history)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
         run: python -m vp run --mode history
       - name: Manifest

@@ -1,7 +1,7 @@
 """Ask Vayu · text-to-SQL analyst agent with guardrails, plus the daily AI brief.
 
 Provider: any OpenAI-compatible endpoint, picked from env in this order:
-  GROQ_API_KEY → Groq · GEMINI_API_KEY → Gemini · GITHUB_TOKEN → GitHub Models (free in Actions)
+  GROQ_API_KEY → Groq · GEMINI_API_KEY → Gemini (both have free tiers; GitHub Models was retired 30 Jul 2026)
 Guardrails: read-only DuckDB connection, whitelisted views, single SELECT/WITH statement,
 blocked keywords, forced LIMIT, and the SQL is always returned with the answer.
 """
@@ -46,8 +46,6 @@ def provider() -> tuple[str, str, str] | None:
     if os.getenv("GEMINI_API_KEY"):
         return ("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
                 os.environ["GEMINI_API_KEY"], "gemini-2.0-flash")
-    if os.getenv("GITHUB_TOKEN"):
-        return "https://models.github.ai/inference/chat/completions", os.environ["GITHUB_TOKEN"], "openai/gpt-4o-mini"
     return None
 
 
@@ -55,14 +53,15 @@ _last_call = [0.0]
 
 
 def _min_gap() -> float:
-    """GitHub Models' free tier allows ~15 requests a minute; pace calls rather than hit 429s."""
-    return 4.2 if (p := provider()) and "github.ai" in p[0] else 0.0
+    """Free tiers cap requests per minute (Groq ~30, Gemini ~15); pace calls rather than hit 429s."""
+    p = provider()
+    return 0.0 if not p else 4.2 if "googleapis" in p[0] else 2.1
 
 
 def llm(system: str, user: str, json_mode: bool = False) -> str:
     p = provider()
     if not p:
-        raise RuntimeError("no LLM provider configured (set GROQ_API_KEY, GEMINI_API_KEY or GITHUB_TOKEN)")
+        raise RuntimeError("no LLM provider configured (set GROQ_API_KEY or GEMINI_API_KEY)")
     url, key, model = p
     body = {"model": model, "temperature": 0, "messages": [{"role": "system", "content": system},
                                                            {"role": "user", "content": user}]}
