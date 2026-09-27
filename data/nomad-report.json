@@ -1,0 +1,43 @@
+{
+ "status": "complete",
+ "run_id": "scan",
+ "finished": "2026-09-27T22:38:55+00:00",
+ "target_url": "https://vayu-pramaan.vercel.app",
+ "commit": "f03141423f7be0a16104b21c6a682036ac9e1398",
+ "verdict": "ship",
+ "duration_s": 308,
+ "stats": {
+  "steps": 45,
+  "states": 2,
+  "edges": 45,
+  "bugs": 0,
+  "tierCounts": {
+   "heuristic": 0,
+   "ranker": 0,
+   "llm": 0,
+   "fallback": 45
+  },
+  "heals": {
+   "exact": 45,
+   "healed": 0,
+   "failed": 0
+  },
+  "llmCalls": 0,
+  "elapsedMs": 269411,
+  "stepP50Ms": 5552,
+  "stepP95Ms": 6433
+ },
+ "bugs": [],
+ "history": [
+  {
+   "run_id": "scan",
+   "finished": "2026-09-27T22:38:55+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 0,
+   "duration_s": 308,
+   "commit": "f03141423f7be0a16104b21c6a682036ac9e1398"
+  }
+ ]
+}
