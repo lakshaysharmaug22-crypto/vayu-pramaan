@@ -20,7 +20,7 @@ Release-gated by [Nomad Loop Engine](https://github.com/lakshaysharmaug22-crypto
 | Open data | Data Engineering | Static JSON API v1, OpenAPI 3.1 spec, dataset catalog with schemas and freshness |
 | Search | Product | Command palette (/ or Ctrl+K): dates, stations, findings, questions, blocks, endpoints |
 | Public ledger | Systems | SHA-256 + Merkle root + hash chain, append-only, verifiable in the browser, OpenTimestamps anchoring |
-| Tested by Nomad Loop | Engineering QA | Nomad's latest run against this site: flows, bugs, verdict |
+| Tested by Nomad Loop | Engineering QA | Nomad Loop Engine scans the live site after every deploy (its GitHub Action); report shared with Nomad's /target page |
 
 ## Pipeline
 

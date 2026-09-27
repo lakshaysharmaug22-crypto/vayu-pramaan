@@ -1,26 +1,131 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "nomad-report.json — contract between Nomad Loop Engine and Vayu Pramaan",
-  "description": "Written by Nomad after each run against the deployed site. Both projects' UIs read this same file.",
-  "type": "object",
-  "required": ["status", "run_id", "finished", "target_url", "verdict", "flows"],
-  "properties": {
-    "status": { "enum": ["complete", "error"] },
-    "run_id": { "type": "string" },
-    "finished": { "type": "string", "format": "date-time" },
-    "target_url": { "type": "string" },
-    "commit": { "type": "string", "description": "Vayu Pramaan commit SHA that was deployed" },
-    "verdict": { "enum": ["ship", "blocked"] },
-    "duration_s": { "type": "number" },
-    "flows": { "type": "array", "items": { "type": "object", "required": ["name", "status"],
-      "properties": { "name": { "type": "string" }, "status": { "enum": ["pass", "fail"] },
-                      "steps": { "type": "integer" }, "duration_s": { "type": "number" } } } },
-    "bugs": { "type": "array", "items": { "type": "object", "required": ["title", "severity"],
-      "properties": { "id": { "type": "string" }, "title": { "type": "string" },
-                      "severity": { "enum": ["critical", "major", "minor"] }, "status": { "enum": ["open", "fixed", "verified"] },
-                      "repro": { "type": "array", "items": { "type": "string" } }, "issue_url": { "type": "string" } } } },
-    "history": { "type": "array", "items": { "type": "object",
-      "properties": { "run_id": { "type": "string" }, "verdict": { "enum": ["ship", "blocked"] },
-                      "flows_passed": { "type": "integer" }, "flows_total": { "type": "integer" }, "duration_s": { "type": "number" } } } }
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "nomad-report.json: contract between Nomad Loop Engine and Vayu Pramaan",
+ "description": "Written by scripts/nomad_report.py from Nomad's run.json after each scan. Vayu Pramaan's #nomad row and Nomad's /target page both read it.",
+ "type": "object",
+ "required": [
+  "status",
+  "verdict",
+  "stats",
+  "bugs"
+ ],
+ "properties": {
+  "status": {
+   "enum": [
+    "complete",
+    "error",
+    "not_run"
+   ]
+  },
+  "run_id": {
+   "type": "string"
+  },
+  "finished": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "target_url": {
+   "type": "string"
+  },
+  "commit": {
+   "type": "string"
+  },
+  "verdict": {
+   "enum": [
+    "ship",
+    "blocked"
+   ]
+  },
+  "duration_s": {
+   "type": "number"
+  },
+  "stats": {
+   "type": "object",
+   "description": "Nomad RunStats: steps, states, edges, bugs, tierCounts, heals, stepP50Ms, stepP95Ms"
+  },
+  "bugs": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "title": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string"
+     },
+     "severity": {
+      "enum": [
+       "minor",
+       "major",
+       "critical"
+      ]
+     },
+     "status": {
+      "enum": [
+       "confirmed",
+       "flaky",
+       "unverified"
+      ]
+     },
+     "confirmations": {
+      "type": "string"
+     },
+     "foundAtStep": {
+      "type": "integer"
+     },
+     "url": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string"
+     },
+     "steps": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  },
+  "history": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "run_id": {
+      "type": "string"
+     },
+     "finished": {
+      "type": "string"
+     },
+     "verdict": {
+      "enum": [
+       "ship",
+       "blocked"
+      ]
+     },
+     "steps": {
+      "type": "integer"
+     },
+     "states": {
+      "type": "integer"
+     },
+     "bugs": {
+      "type": "integer"
+     },
+     "duration_s": {
+      "type": "number"
+     },
+     "commit": {
+      "type": "string"
+     }
+    }
+   }
   }
+ }
 }

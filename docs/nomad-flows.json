@@ -1,8 +1,0 @@
-[
-  {"name": "Open every row and detail view", "goal": "Each card in every row opens a modal with content and closes cleanly"},
-  {"name": "Play the season replay", "goal": "Replay panel appears, date advances, panel hides at the end"},
-  {"name": "Drag both GRAP cost sliders", "goal": "Threshold, stats, matrix, cost curve and Today's call all update"},
-  {"name": "Open an Ask Vayu question", "goal": "Agent steps animate, then SQL and a result table appear"},
-  {"name": "Verify a ledger block in the browser", "goal": "All four verification checks show a tick"},
-  {"name": "Check the page on a phone-width screen", "goal": "No horizontal page scroll; rows scroll sideways"}
-]

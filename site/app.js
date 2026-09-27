@@ -488,21 +488,32 @@ function verifyModal(b, prev) {
 }
 
 function nomadRow() {
-  const N = D.nomad || {}, repo = "https://github.com/lakshaysharmaug22-crypto/nomad-loop-engine";
-  if (!N.status || N.status === "not_run") {
-    const flows = ["Open every row and detail view", "Play the season replay", "Drag both GRAP cost sliders", "Open an Ask Vayu question", "Verify a ledger block in the browser", "Check the page on a phone-width screen"];
-    row({ id: "nomad", title: "Tested by Nomad Loop", role: "Engineering QA", c: "--qa", sub: "Nomad Loop Engine explores this site like a user on every deploy, files bugs with repro steps, and blocks the release on a critical one.",
-      cards: [card({ eyebrow: "Release gate", title: "Awaiting first run", body: `<div class="big muted">–</div><p class="take">The first Nomad run is wired into the deploy workflow. Results appear here after it runs.</p>`, foot: `<a href="${repo}" onclick="event.stopPropagation()">See the engine ›</a>` }),
-        ...flows.map((f, i) => card({ eyebrow: `Flow ${i + 1}`, title: f, body: `<span class="pill skipped">not run yet</span>`, foot: "" }))] });
+  const N = D.nomad || {}, repo = "https://github.com/lakshaysharmaug22-crypto/nomad-loop-engine", dash = "https://nomad-loop-engine.vercel.app/target";
+  const sub = "Nomad Loop Engine explores this site like a user after every deploy, files each confirmed bug with a replayable test, and blocks the release on a major or critical one.";
+  const links = `<a href="${dash}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Nomad's view ›</a>`;
+  if (N.status !== "complete" || !N.stats) {
+    const c = card({ eyebrow: "Release gate", title: "Awaiting first scan", body: `<div class="big muted">–</div><p class="take">The scan runs automatically after the next deploy. Results appear here and on Nomad's dashboard from the same report file.</p>`, foot: links });
+    c.classList.add("black");
+    const how = card({ eyebrow: "How it works", title: "Explore · report · gate", body: `<ol class="muted" style="margin:0;padding-left:18px;font-size:13px;display:flex;flex-direction:column;gap:4px"><li>Vercel finishes a deploy</li><li>Nomad explores the live site for 45 steps</li><li>Each bug is replayed 3× and gets a Playwright test</li><li>A confirmed major bug fails the release check</li></ol>`, foot: `<a href="${repo}" target="_blank" rel="noopener" onclick="event.stopPropagation()">See the engine ›</a>` });
+    row({ id: "nomad", title: "Tested by Nomad Loop", role: "Engineering QA", c: "--qa", sub, cards: [c, how] });
     return;
   }
-  const flows = N.flows || [], bugs = N.bugs || [], hist = N.history || [];
-  const verdict = card({ eyebrow: `Run ${esc(N.run_id || "")} · ${N.duration_s ?? "–"}s`, title: N.verdict === "ship" ? "Shipped" : "Blocked",
-    body: `<div class="big" style="color:${N.verdict === "ship" ? "var(--qa)" : "var(--vpoor)"}">${flows.filter(f => f.status === "pass").length}/${flows.length} flows</div><p class="take">${bugs.length} bug${bugs.length === 1 ? "" : "s"} found · ${hist.filter(h => h.verdict === "blocked").length} releases blocked so far</p>`,
-    foot: `<a href="${repo}" onclick="event.stopPropagation()">See the engine ›</a>` });
-  const fl = flows.map(f => card({ eyebrow: "Flow", title: f.name, body: `<span class="pill ${f.status === "pass" ? "ok" : "bad"}">${f.status}</span><div class="muted" style="font-size:12.5px">${f.steps ?? "–"} steps · ${f.duration_s ?? "–"}s</div>`, foot: "" }));
-  const bg = bugs.map(x => card({ eyebrow: `${esc(x.severity || "")} · ${esc(x.status || "")}`, title: x.title, body: `<ol style="margin:0;padding-left:18px;font-size:12.5px" class="muted">${(x.repro || []).slice(0, 4).map(s => `<li>${esc(s)}</li>`).join("")}</ol>`, foot: x.issue_url ? `<a href="${esc(x.issue_url)}" onclick="event.stopPropagation()">GitHub issue ›</a>` : "" }));
-  row({ id: "nomad", title: "Tested by Nomad Loop", role: "Engineering QA", c: "--qa", sub: "Nomad Loop Engine explores this site like a user on every deploy, files bugs with repro steps, and blocks the release on a critical one.", cards: [verdict, ...fl, ...bg] });
+  const s = N.stats, bugs = N.bugs || [], hist = N.history || [], ship = N.verdict === "ship";
+  const verdict = card({ eyebrow: `Scan ${esc((N.finished || "").slice(0, 16).replace("T", " "))} · commit ${esc((N.commit || "").slice(0, 7))}`, title: ship ? "Shipped" : "Release blocked",
+    body: `<div class="big" style="color:${ship ? "var(--qa)" : "var(--red)"}">${ship ? "PASS" : "BLOCKED"}</div><div class="stat-row"><div class="stat"><b class="num">${s.steps}</b><span>steps</span></div><div class="stat"><b class="num">${s.states}</b><span>UI states</span></div><div class="stat"><b class="num" style="color:${bugs.length ? "var(--red)" : ""}">${bugs.length}</b><span>bugs</span></div></div>`,
+    foot: links });
+  verdict.classList.add("black");
+  const tiers = Object.entries(s.tierCounts || {}).filter(([, v]) => v > 0), tot = tiers.reduce((a, [, v]) => a + v, 0) || 1;
+  const how = card({ eyebrow: `${N.duration_s ?? "–"} s scan`, title: "How Nomad decided",
+    body: tiers.map(([k, v]) => `<div><div style="display:flex;justify-content:space-between;font-size:12.5px"><span>${esc(k)}</span><span class="mono">${v}</span></div><div class="bar" style="--c:var(--qa)"><i style="width:${v / tot * 100}%"></i></div></div>`).join("") || `<p class="take">No decisions recorded.</p>`,
+    foot: s.stepP95Ms ? `Step p95 ${s.stepP95Ms} ms` : "" });
+  const bg = bugs.map(x => { const c = card({ eyebrow: `${esc(x.severity)} · ${esc(x.status)} · ${esc(x.confirmations || "")}`, title: x.title,
+    body: `<p class="take muted" style="margin:0">${esc(x.message || "")}</p><ol style="margin:0;padding-left:18px;font-size:12px" class="mono muted">${(x.steps || []).slice(0, 4).map(st => `<li>${esc(st)}</li>`).join("")}</ol>`,
+    foot: `found at step ${x.foundAtStep}` }); if (x.severity !== "minor") c.classList.add("black"); return c; });
+  const hc = hist.length > 1 ? card({ eyebrow: `${hist.length} scans`, title: "Release history",
+    body: bars(hist.slice(-20).map(h => ({ label: "", v: h.states, c: h.verdict === "ship" ? "var(--qa)" : "var(--red)" })), { w: 300, h: 130 }),
+    foot: `${hist.filter(h => h.verdict === "blocked").length} releases blocked` }) : null;
+  row({ id: "nomad", title: "Tested by Nomad Loop", role: "Engineering QA", c: "--qa", sub, cards: [verdict, how, ...bg, hc] });
 }
 
 /* ───────────── what-if simulator ───────────── */

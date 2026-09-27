@@ -1,0 +1,44 @@
+name: history-backfill
+
+# One-off (re-runnable) backfill: real station data, fires, weather and CAMS since 2017,
+# full pipeline, then commits the compact raw parquet the daily job builds on.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  models: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Download CPCB station CSVs (OpenCity)
+        run: python scripts/fetch_opencity.py
+      - name: Show what the station files look like
+        run: |
+          ls -la data/raw/aqi_opencity | head -20
+          for f in $(ls data/raw/aqi_opencity/*.csv | head -2); do echo "== $f"; head -3 "$f"; done
+      - name: Pipeline (history)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+        run: python -m vp run --mode history
+      - name: Manifest
+        if: always()
+        run: python -c "import json,glob;d=json.load(open(sorted(glob.glob('data/runs/run_*.json'))[-1]));[print(s['stage'],'|',s['step'],'|',s['status'],'|',s['rows_out'],'|',(s['error'] or s['notes'])[:300]) for s in d['steps']]"
+      - name: Commit data
+        if: success()
+        run: |
+          git config user.name "vayu-pramaan-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw data/runs ledger site/data site/api
+          git diff --cached --quiet || git commit -m "backfill: real data since 2017"
+          git push
