@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-27T22:45:03+00:00",
+ "generated_at": "2026-09-27T23:06:50+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -8,7 +8,7 @@
    "description": "CPCB method: mean of station AQIs (PM2.5 + PM10 sub-indices, \u226516 valid hours).",
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
-   "rows": 3258,
+   "rows": 3467,
    "freshness": "2026-09-24",
    "schema": [
     {
@@ -40,7 +40,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 343352,
+   "bytes": 365252,
    "license": "Open data; attribute the original source"
   },
   {
@@ -209,7 +209,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 618,
+   "bytes": 489,
    "license": "Open data"
   },
   {
@@ -222,7 +222,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 660,
+   "bytes": 1437,
    "license": "Open data"
   },
   {
@@ -235,7 +235,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 4016,
+   "bytes": 5098,
    "license": "Open data"
   }
  ]
