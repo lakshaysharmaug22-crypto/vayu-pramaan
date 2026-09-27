@@ -69,14 +69,23 @@ Other commands: `python -m vp verify` · `python -m vp ask "Which week in 2024 h
 
 ## Results
 
-Filled from real runs only. Numbers from synthetic runs are never reported.
+From the real-data backfill of 28 Sept 2026 (`data/runs/`). Walk-forward over seven October–November seasons (2019–2025, 427 days per horizon); the model never sees the season it is scored on. Synthetic runs are never reported.
 
-| Metric (48h, walk-forward) | Value |
-|---|---|
-| MAE vs persistence | _pending real run_ |
-| 80% band coverage | _pending_ |
-| Severe days caught | _pending_ |
-| Agent eval | _pending_ /25 |
+| Lead (days from last observation) | MAE | Persistence MAE | Skill vs persistence | Diebold-Mariano p | 80% band coverage |
+|---|---|---|---|---|---|
+| 1 | 32.7 | 35.0 | 6.4% | 0.064 | 77% |
+| 2 | 45.5 | 50.3 | 9.5% | 0.031 | 70% |
+| 3 | 49.9 | 57.7 | 13.6% | 0.007 | 72% |
+| 6 | 55.7 | 71.2 | 21.8% | <0.001 | 68% |
+
+What it does not do well yet, stated plainly:
+- **Severe days (AQI > 400):** 16 of 67 caught at 1 day ahead (CSI 0.20); from 2 days out, close to none. The median forecast regresses away from extremes.
+- **Band coverage** runs 68–77% against a nominal 80%, so the intervals are too narrow in winter.
+- **Agent eval:** not run. It needs `GROQ_API_KEY` or `GEMINI_API_KEY` (see above).
+
+**Data volume.** 667,875 VIIRS fire detections · 2.33M hourly station readings from 37 CPCB stations (2017–2025) · 3,467 city-AQI days · 3.2M raw rows validated against 20 data contracts in ~90 s per run.
+
+**Lead time.** The open station archive runs 1–3 days behind. Lead is counted from the last verified observation, and only targets still in the future on the issue date are committed to the ledger (`ledger.commit` refuses anything else).
 
 ## Data sources
 

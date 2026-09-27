@@ -57,7 +57,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/nomad-report.json site/data/nomad.json
           git diff --cached --quiet || git commit -m "nomad: QA report [skip ci]"
-          git pull --rebase -q && git push
+          git pull --rebase --autostash -q && git push
 
       - name: Gate the release
         if: steps.report.outcome == 'failure' || steps.nomad.outcome == 'failure'
