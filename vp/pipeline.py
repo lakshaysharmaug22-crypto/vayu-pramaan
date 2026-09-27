@@ -172,6 +172,15 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
                 r.notes = f"block #{block['height']} root {block['root'][:12]}…"
             except RuntimeError as e:
                 r.status, r.notes = "skipped", str(e)
+                # Today is already committed: show what the ledger holds, not this re-run's numbers.
+                committed = ledger.entries_for(run_date)
+                if committed:
+                    cv = pd.DataFrame([x for x in committed if x.get("source") == "vayu"])
+                    if len(cv):
+                        cv["target_date"] = pd.to_datetime(cv.target_date)
+                        cv["issue_date"] = pd.to_datetime(cv.obs_date if "obs_date" in cv else cv.issue_date)
+                        ctx["forecast"] = fc = cv[["issue_date", "target_date", "horizon_h", "p10", "p50", "p90", "p_severe"]]
+                        r.notes += "; site shows the committed forecast"
         r.rows_out = len(rows)
     with R.step("ledger", "verify chain") as r:
         v = ledger.verify(); ctx["verify"] = v

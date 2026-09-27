@@ -72,6 +72,11 @@ def _chain() -> list[dict]:
     return [json.loads(l) for l in CHAIN.read_text().splitlines() if l.strip()]
 
 
+def entries_for(run_date: str) -> list[dict]:
+    p = ENTRIES / f"{run_date}.jsonl"
+    return [json.loads(l) for l in p.read_text().splitlines() if l.strip()] if p.exists() else []
+
+
 def today_ist() -> str:
     return (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d")
 
