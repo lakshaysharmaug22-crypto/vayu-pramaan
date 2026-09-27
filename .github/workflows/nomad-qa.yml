@@ -2,6 +2,7 @@ name: nomad-qa
 
 # After every successful Vercel deploy, Nomad Loop Engine explores the live site like a user.
 # Its report feeds both dashboards; a confirmed major or critical bug fails this check.
+# Scans the public production URL: per-deploy preview URLs sit behind Vercel's login wall.
 on:
   deployment_status:
   workflow_dispatch:
@@ -19,11 +20,11 @@ concurrency:
 
 jobs:
   qa:
-    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    if: github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      TARGET_URL: ${{ github.event.inputs.url || github.event.deployment_status.environment_url }}
+      TARGET_URL: ${{ github.event.inputs.url || vars.VAYU_URL || 'https://vayu-pramaan.vercel.app' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,6 +51,7 @@ jobs:
         run: python scripts/nomad_report.py "${{ steps.nomad.outputs.run-dir }}" "$TARGET_URL" "$GITHUB_SHA" "$(( $(date +%s) - T0 ))"
 
       - name: Publish report
+        if: steps.report.outcome == 'success'
         run: |
           git config user.name "nomad-loop-bot"
           git config user.email "actions@users.noreply.github.com"

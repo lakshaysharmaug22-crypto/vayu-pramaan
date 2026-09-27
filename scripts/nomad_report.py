@@ -7,6 +7,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 SEV = {"minor": 1, "major": 2, "critical": 3}
 
@@ -19,6 +20,12 @@ def main(run_dir: str, url: str, commit: str, dur: str) -> None:
             for b in run.get("bugs", [])]
     blocking = [b for b in bugs if b["status"] == "confirmed" and SEV.get(b["severity"], 0) >= SEV["major"]]
     s = run.get("stats", {})
+    origin = urlparse(url).netloc
+    walled = any(urlparse(b.get("url") or url).netloc not in ("", origin) for b in bugs if (b.get("foundAtStep") or 0) == 0)
+    if not s.get("steps") or walled:
+        # Nomad never got past the first page (auth wall, redirect off-site, site down): not a QA result.
+        print(f"scan did not reach {url} (steps={s.get('steps')}, off-site={walled}); report not published")
+        sys.exit(1)
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     verdict = "blocked" if blocking else "ship"
     entry = {"run_id": run.get("runId", now), "finished": now, "verdict": verdict, "steps": s.get("steps", 0),
