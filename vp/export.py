@@ -73,7 +73,8 @@ def write_all(ctx: dict, run) -> int:
 
     # season timelines (for the hero "play the season" + findings charts)
     n += _w("seasons.json", _df(con.execute("""
-        select a.date, a.aqi, a.band, f.fires, f.fires_punjab, f.fires_haryana, w.nw_frac, w.wind_dir, w.blh, c.aqi_equiv cams
+        select a.date, a.aqi, a.band, f.fires, f.fires_punjab, f.fires_haryana, w.nw_frac, w.nw_frac_upwind, w.wind_dir,
+               w.wind_speed, w.blh, w.blh_min, c.aqi_equiv cams
         from v_aqi_daily a left join v_fires_upwind f using (date) left join v_wind_daily w using (date)
         left join v_cams_daily c using (date)
         where month(a.date) in (9, 10, 11, 12) order by a.date""").df()))
@@ -84,6 +85,9 @@ def write_all(ctx: dict, run) -> int:
         where year(date) = {yr or 0} and month(date) in (10, 11)
         qualify row_number() over (partition by date order by hash(lat, lon)) <= 220 order by date""").df()
     n += _w("season_points.json", {"season": yr, "points": _df(pts)})
+    st = con.execute(f"""select date, station, round(aqi) aqi, round(pm25, 1) pm25 from v_station_daily
+        where year(date) = {yr or 0} and month(date) in (10, 11) order by date, station""").df()
+    n += _w("season_stations.json", {"season": yr, "rows": _df(st)})
 
     bt = con.execute("select * from backtest where horizon_h = 48 order by target_date").df()
     n += _w("backtest.json", {"metrics": ctx["metrics"], "calibration": ctx["calibration"],

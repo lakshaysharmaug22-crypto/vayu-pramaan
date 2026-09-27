@@ -51,7 +51,7 @@ Synthetic runs live in `data/synthetic/` and never touch real data or the public
 
 **Real data, first time:**
 1. Station data: download the Delhi station CSVs from [OpenCity · Delhi Hourly Air Quality Reports](https://data.opencity.in/dataset/delhi-hourly-air-quality-reports) (CPCB source, public domain) into `data/raw/aqi_opencity/`.
-2. Optional, better state split: put an India states GeoJSON at `data/ref/india_states.geojson`. Without it, fires are split between Punjab and Haryana with an approximate bounding box.
+2. State boundaries ship in `data/ref/india_states.geojson` (Natural Earth, public domain), so fires are assigned to Punjab or Haryana by real polygons.
 3. `python -m vp run --mode history`
 4. **Fire data fallback:** if the FIRMS yearly archive download fails, either set `FIRMS_MAP_KEY` (free, instant from FIRMS) or drop FIRMS archive CSVs into `data/raw/fires_manual/`.
 

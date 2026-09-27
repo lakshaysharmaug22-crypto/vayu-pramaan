@@ -1,0 +1,16 @@
+{
+  "note": "Approximate coordinates of Delhi CPCB/DPCC monitoring stations, for display only. Matched to station names by a normalised key.",
+  "stations": {
+    "alipur": [77.153, 28.816], "anandvihar": [77.316, 28.647], "ashokvihar": [77.182, 28.695], "ayanagar": [77.110, 28.471],
+    "bawana": [77.051, 28.776], "burari": [77.201, 28.726], "chandnichowk": [77.228, 28.656], "crri": [77.274, 28.551],
+    "mathuraroad": [77.274, 28.551], "dtu": [77.111, 28.750], "dwarkasector8": [77.072, 28.571], "dwarka": [77.072, 28.571],
+    "igiairport": [77.118, 28.563], "airport": [77.118, 28.563], "ihbas": [77.303, 28.681], "dilshadgarden": [77.303, 28.681],
+    "ito": [77.241, 28.629], "jahangirpuri": [77.171, 28.733], "jawaharlalnehru": [77.234, 28.580], "jlnstadium": [77.234, 28.580],
+    "lodhiroad": [77.227, 28.592], "majordhyanchand": [77.238, 28.611], "nationalstadium": [77.238, 28.611], "mandirmarg": [77.201, 28.636],
+    "mundka": [77.076, 28.684], "najafgarh": [76.934, 28.570], "narela": [77.102, 28.823], "nehrunagar": [77.251, 28.568],
+    "northcampus": [77.159, 28.657], "nsitdwarka": [77.033, 28.609], "okhlaphase2": [77.271, 28.531], "okhla": [77.271, 28.531],
+    "patparganj": [77.287, 28.624], "punjabibagh": [77.131, 28.674], "pusa": [77.146, 28.640], "rkpuram": [77.187, 28.563],
+    "rohini": [77.120, 28.733], "shadipur": [77.147, 28.652], "sirifort": [77.216, 28.550], "soniavihar": [77.250, 28.711],
+    "sriaurobindomarg": [77.190, 28.531], "aurobindomarg": [77.190, 28.531], "vivekvihar": [77.315, 28.672], "wazirpur": [77.166, 28.700]
+  }
+}

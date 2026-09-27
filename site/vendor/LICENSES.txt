@@ -1,0 +1,4 @@
+deck.gl 9.1.14 — MIT License, Copyright (c) Vis.gl contributors
+maplibre-gl 4.7.1 — BSD-3-Clause, Copyright (c) MapLibre contributors
+State boundaries — Natural Earth, public domain
+Basemap — CARTO Dark Matter, (c) OpenStreetMap contributors (c) CARTO

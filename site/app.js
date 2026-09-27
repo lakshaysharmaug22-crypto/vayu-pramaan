@@ -3,7 +3,7 @@
 "use strict";
 const $ = (s, r = document) => r.querySelector(s);
 const FILES = ["overview", "live", "seasons", "season_points", "backtest", "findings", "decision", "agent", "ledger", "pipeline", "nomad",
-  "whatif", "arena", "drift", "lineage", "catalog"];
+  "whatif", "arena", "drift", "lineage", "catalog", "season_stations"];
 const D = {};
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -117,7 +117,7 @@ Promise.allSettled(FILES.map(f => fetch(`data/${f}.json`, { cache: "no-cache" })
   .then(res => {
     res.forEach((r, i) => { D[FILES[i]] = r.status === "fulfilled" ? r.value : null; });
     if (!D.overview) { $("#hero").innerHTML = `<p class="skeleton">Couldn't load the forecast data. Run the pipeline to generate site/data.</p>`; return; }
-    status(); banner(); hero(); forecastRow(); whatifRow(); arenaRow(); findingsRow(); deskRow(); askRow(); liveRow();
+    status(); banner(); hero(); forecastRow(); connectorsRow(); whatifRow(); arenaRow(); findingsRow(); deskRow(); askRow(); liveRow();
     pipelineRow(); lineageRow(); healthRow(); ledgerRow(); apiRow(); nomadRow(); search.init();
     if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
   });
@@ -146,12 +146,59 @@ function hero() {
       <span class="chip" style="color:${call?.act ? "var(--vpoor)" : "var(--qa)"}"><i></i><span style="color:var(--text)">GRAP: ${esc(call?.stage || "Hold")}</span></span>
       ${head ? `<span class="chip" style="color:var(--de)"><i></i><span style="color:var(--text)">Ledger block #${head.height}</span></span>` : ""}
     </div>
-    <div class="btns"><button class="btn play" id="play">▶ Play the ${D.season_points?.season || ""} season</button><button class="btn ghost" id="why">Why this forecast</button></div>`;
+    <div class="btns"><button class="btn play" id="play">▶ Play the ${D.season_points?.season || ""} season</button><button class="btn ghost" id="why">Why this forecast</button></div>
+    <div class="dock" aria-label="Quick actions"><button type="button" data-go="whatif">What if…</button><button type="button" data-go="verify">Verify ledger</button><button type="button" data-go="ask">Ask Vayu</button><button type="button" data-go="api">Open data</button><button type="button" data-go="search">Search <kbd>/</kbd></button></div>`;
   $("#why").onclick = () => whyModal();
-  $("#play").onclick = () => map.play();
-  map.init();
+  $("#play").onclick = () => VayuMap.play();
+  $("#hero").querySelectorAll("[data-go]").forEach(b => b.onclick = () => {
+    const g = b.dataset.go;
+    if (g === "search") return search.open();
+    if (g === "verify") { const bl = D.ledger?.blocks || []; if (bl.length) return verifyModal(bl[bl.length - 1], bl[bl.length - 2]); }
+    document.getElementById(g === "verify" ? "ledger" : g)?.scrollIntoView({ behavior: "smooth" });
+  });
+  VayuMap.init(D, { station: s => { const b = band(s.aqi); modal({ eyebrow: "Monitoring station", title: s.station,
+    body: `<div style="display:flex;align-items:baseline;gap:12px"><span class="big num" style="font-size:52px;color:${s.aqi > 400 ? "var(--red)" : `var(${b[2]})`}">${n0(s.aqi)}</span><b>${b[1]}</b></div>${table(Object.keys(s).filter(k => k !== "pos"), [s])}<p class="dim" style="margin:0;font-size:12px">Map position is approximate.</p>` }); } });
+  kpis();
 }
 
+function kpis() {
+  const o = D.overview, L = D.live || {}, fc = o.forecast || [], peak = fc.reduce((m, f) => f.p50 > (m?.p50 ?? -1) ? f : m, null);
+  const w = (L.wind || []).slice(-1)[0] || {}, f24 = (L.fires_daily || []).slice(-1)[0] || {}, m = D.backtest?.metrics?.overall_48h || {};
+  const P = D.pipeline?.latest?.stages || {}, cp = Object.values(P).reduce((s, x) => s + (x.checks_passed || 0), 0), ct = Object.values(P).reduce((s, x) => s + (x.checks_total || 0), 0);
+  const K = [
+    ["Delhi AQI now", o.latest?.aqi, band(o.latest?.aqi)[1], o.latest?.aqi > 400 ? "var(--red)" : `var(${band(o.latest?.aqi)[2]})`],
+    ["72h peak forecast", peak?.p50, peak ? d8(peak.target_date) : "", peak?.p50 > 400 ? "var(--red)" : `var(${band(peak?.p50)[2]})`],
+    ["Upwind fires, 24h", f24.fires, "Punjab + Haryana", "var(--ds)"],
+    ["Northwest wind", w.nw_frac != null ? Math.round(w.nw_frac * 100) : null, "% of hours · smoke corridor", w.nw_frac > .5 ? "var(--red)" : "var(--text)"],
+    ["Night mixing height", w.blh_min, "metres · lower traps smoke", w.blh_min < 300 ? "var(--red)" : "var(--text)"],
+    ["Skill vs persistence", m.skill_vs_persistence != null ? Math.round(m.skill_vs_persistence * 100) : null, "% lower error, 48h", "var(--text)"],
+    ["Ledger blocks", D.ledger?.verify?.blocks ?? 0, D.ledger?.verify?.ok ? "chain intact" : "chain problem", D.ledger?.verify?.ok ? "var(--text)" : "var(--red)"],
+    ["Pipeline checks", cp, `of ${ct} passed`, cp < ct ? "var(--ba)" : "var(--text)"],
+  ];
+  $("#kpis").innerHTML = K.map(([k, v, s, c]) => `<div class="kpi"><span class="k">${k}</span><b class="num" data-v="${v ?? ""}" style="color:${c}">${v == null ? "–" : "0"}</b><span class="s">${esc(s)}</span></div>`).join("");
+  $("#kpis").querySelectorAll("b[data-v]").forEach(b => { const v = +b.dataset.v; if (!b.dataset.v) return; if (reduce) { b.textContent = n0(v); return; }
+    const t0 = performance.now(); const step = t => { const k = Math.min(1, (t - t0) / 1100), e = 1 - Math.pow(1 - k, 3); b.textContent = n0(v * e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); });
+}
+function connectorsRow() {
+  const Lg = D.lineage?.nodes || [], fresh = id => Lg.find(n => n.id === id)?.freshness, age = d => d ? Math.round((Date.now() - new Date(String(d).slice(0, 10) + "T00:00:00")) / 864e5) : null;
+  const light = d => { const a = age(d); return a == null ? ["–", "var(--dim)"] : a <= 2 ? ["Live", "var(--qa)"] : a <= 7 ? [`${a}d old`, "var(--ba)"] : [`${a}d old`, "var(--red)"]; };
+  const N = D.nomad || {}, V = D.ledger?.verify || {};
+  const C = [
+    ["NASA FIRMS", "VIIRS fire detections · 375 m", fresh("raw_fires"), "https://firms.modaps.eosdis.nasa.gov/", "Ingest"],
+    ["CPCB stations", "PM2.5 + PM10, hourly", fresh("raw_aqi") || D.overview.latest?.date, "https://airquality.cpcb.gov.in/", "Ingest"],
+    ["Open-Meteo", "Wind, mixing height, weather", fresh("raw_weather"), "https://open-meteo.com/", "Ingest"],
+    ["Copernicus CAMS", "Global air-quality model", fresh("raw_cams"), "https://atmosphere.copernicus.eu/", "Ingest · benchmark"],
+    ["GitHub Actions", `Daily 06:00 IST run · ${V.blocks ?? 0} ledger blocks`, D.pipeline?.latest?.finished, "https://github.com/features/actions", "Orchestration"],
+    ["OpenTimestamps", "Bitcoin-anchored proof of each day's forecasts", D.pipeline?.latest?.finished, "https://opentimestamps.org/", "Proof"],
+    ["Nomad Loop Engine", N.status === "complete" ? `${N.verdict} · ${(N.flows || []).length} flows` : "Awaiting first QA run", N.finished || null, "https://github.com/lakshaysharmaug22-crypto/nomad-loop-engine", "Release gate"],
+    ["Public API", `${D.catalog?.datasets?.length || 0} JSON endpoints + OpenAPI`, D.catalog?.generated_at, "#api", "Output"],
+  ];
+  const cards = C.map(([t, s, f, href, role]) => { const [lt, lc] = light(f); const c = card({ eyebrow: role, title: t,
+    body: `<p class="take muted" style="margin:0">${esc(s)}</p><div style="display:flex;align-items:center;gap:8px;font-size:12.5px"><i style="width:8px;height:8px;border-radius:50%;background:${lc};display:inline-block"></i><span style="color:${lc}">${lt}</span><span class="dim">${f ? "· " + dY(f) : ""}</span></div>`,
+    foot: `<a href="${href}" ${href.startsWith("#") ? "" : 'target="_blank" rel="noopener"'} onclick="event.stopPropagation()" style="color:var(--text)">${href.startsWith("#") ? "Open" : "Visit"} ›</a>`, open: null });
+    c.classList.add("black"); return c; });
+  row({ id: "connectors", title: "Connected systems", role: "Integrations", c: "--red", sub: "Every source and service this site depends on, with a live freshness light. Green is fresh, amber is stale, red needs attention.", cards });
+}
 function whyModal() {
   const o = D.overview, e = (o.explain || {})["48"] || (o.explain || {})["24"] || [], br = o.brief || {};
   const items = e.map(x => ({ label: FEAT[x.feature] || x.feature, v: x.aqi_points }));
@@ -168,97 +215,6 @@ function whyModal() {
       <div><div class="eyebrow" style="margin-bottom:6px">Daily brief · ${esc(br.generated_by || "")}</div><p style="margin:0;white-space:pre-wrap">${esc(br.text || "No brief generated in this run.")}</p></div>`,
   });
 }
-
-const map = (() => {
-  const cv = $("#map"), ctx = cv.getContext("2d");
-  const BB = { w: 73.3, e: 78.3, s: 27.5, n: 32.9 }, DELHI = [77.21, 28.61];
-  let W, H, DPR, box, parts = [], pts = [], mode = "live", day = 0, days = [], windDir = 300, raf, playing = false, trail, lastT = 0, visible = true;
-  function resize() {
-    DPR = Math.min(2, devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight;
-    cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    const mobile = W < 760, mw = mobile ? W * 1.1 : W * .62, mh = mobile ? H * .62 : H * .92;
-    const s = Math.min(mw / (BB.e - BB.w), mh / ((BB.n - BB.s) * 1.12));
-    const bw = (BB.e - BB.w) * s, bh = (BB.n - BB.s) * 1.12 * s;
-    box = { s, x0: mobile ? (W - bw) / 2 : W - bw - W * .04, y0: mobile ? 12 : (H - bh) / 2 };
-    trail = document.createElement("canvas"); trail.width = W * DPR; trail.height = H * DPR;
-    trail.getContext("2d").setTransform(DPR, 0, 0, DPR, 0, 0);
-    seedParticles();
-  }
-  const P = (lon, lat) => [box.x0 + (lon - BB.w) * box.s, box.y0 + (BB.n - lat) * 1.12 * box.s];
-  function seedParticles() { parts = Array.from({ length: Math.round(W * H / 5200) }, () => newPart(true)); }
-  function newPart(any) {
-    const lon = BB.w + Math.random() * (BB.e - BB.w), lat = BB.s + Math.random() * (BB.n - BB.s);
-    return { lon, lat, age: any ? Math.random() * 120 : 0, life: 90 + Math.random() * 90 };
-  }
-  function base() {
-    ctx.fillStyle = "#07090B"; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "#ffffff0d"; ctx.lineWidth = 1; ctx.font = "10px JetBrains Mono, monospace"; ctx.fillStyle = "#ffffff38";
-    for (let lon = 74; lon <= 78; lon++) { const [x, y0] = P(lon, BB.n), [, y1] = P(lon, BB.s); ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke(); ctx.fillText(lon + "°E", x + 3, y1 - 4); }
-    for (let lat = 28; lat <= 32; lat++) { const [x0, y] = P(BB.w, lat), [x1] = P(BB.e, lat); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.fillText(lat + "°N", x0 + 3, y - 4); }
-    ctx.font = "600 12px Instrument Sans, sans-serif"; ctx.fillStyle = "#ffffff55"; ctx.letterSpacing = "3px";
-    [["PUNJAB", 75.25, 31.35], ["HARYANA", 76.05, 29.35]].forEach(([t, lo, la]) => { const [x, y] = P(lo, la); ctx.fillText(t, x, y); });
-    ctx.letterSpacing = "0px";
-  }
-  function draw(t) {
-    const dt = Math.min(50, t - lastT || 16); lastT = t;
-    base();
-    // wind: particles move toward (dir + 180); trails on offscreen canvas with decay
-    const tc = trail.getContext("2d");
-    tc.globalCompositeOperation = "destination-out"; tc.fillStyle = "rgba(0,0,0,.08)"; tc.fillRect(0, 0, W, H); tc.globalCompositeOperation = "source-over";
-    const rad = (windDir + 180) * Math.PI / 180, vx = Math.sin(rad), vy = Math.cos(rad), sp = .0065 * dt / 16;
-    tc.strokeStyle = "rgba(170,195,220,.55)"; tc.lineWidth = 1.1;
-    parts.forEach((p, i) => {
-      const [x0, y0] = P(p.lon, p.lat);
-      const wob = Math.sin((p.lat + p.lon) * 3 + t / 900) * .25;
-      p.lon += (vx + wob * vy) * sp; p.lat += (vy - wob * vx) * sp; p.age++;
-      const [x1, y1] = P(p.lon, p.lat);
-      tc.beginPath(); tc.moveTo(x0, y0); tc.lineTo(x1, y1); tc.stroke();
-      if (p.age > p.life || p.lon < BB.w || p.lon > BB.e || p.lat < BB.s || p.lat > BB.n) parts[i] = newPart(false);
-    });
-    ctx.drawImage(trail, 0, 0, W, H);
-    // fires
-    const now = mode === "play" ? days[day]?.date : null;
-    pts.forEach(p => {
-      const [x, y] = P(p.lon, p.lat);
-      let a = 1;
-      if (mode === "play") { const age = (new Date(now) - new Date(p.date)) / 864e5; if (age < 0) return; a = Math.max(.12, 1 - age / 6); }
-      ctx.fillStyle = `rgba(255,122,69,${.18 * a})`; ctx.beginPath(); ctx.arc(x, y, 5.5, 0, 7); ctx.fill();
-      ctx.fillStyle = `rgba(255,${160 + 60 * a | 0},110,${.9 * a})`; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 7); ctx.fill();
-    });
-    // Delhi
-    const [dx, dy] = P(...DELHI), pulse = (t / 1600) % 1, aqi = mode === "play" ? days[day]?.aqi : D.overview.latest?.aqi;
-    const bc = aqi ? cssv(band(aqi)[2]) : "#fff";
-    ctx.strokeStyle = bc; ctx.globalAlpha = 1 - pulse; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(dx, dy, 8 + pulse * 26, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
-    ctx.fillStyle = bc; ctx.beginPath(); ctx.arc(dx, dy, 7, 0, 7); ctx.fill();
-    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(dx, dy, 2.5, 0, 7); ctx.fill();
-    ctx.font = "700 13px Bricolage Grotesque, sans-serif"; ctx.fillText("DELHI", dx + 14, dy + 4);
-    raf = visible ? requestAnimationFrame(draw) : null;
-  }
-  function init() {
-    resize(); addEventListener("resize", resize);
-    const live = D.live?.fire_points || [];
-    pts = live; const w = D.live?.wind?.slice(-1)[0]; windDir = w?.wind_dir ?? 300;
-    new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible && !raf) raf = requestAnimationFrame(draw); }).observe(cv);
-    if (reduce) { base(); draw(0); cancelAnimationFrame(raf); return; }
-    raf = requestAnimationFrame(draw);
-  }
-  function play() {
-    if (playing) return;
-    const sp = D.season_points, y = sp?.season, rows = (D.seasons || []).filter(r => r.date.startsWith(String(y)) && ["10", "11"].includes(r.date.slice(5, 7)));
-    if (!rows.length) return;
-    playing = true; mode = "play"; days = rows; day = 0; pts = sp.points;
-    const rp = $("#replay"); rp.hidden = false;
-    const step = () => {
-      const r = days[day]; windDir = r.wind_dir ?? windDir;
-      const b = band(r.aqi);
-      rp.innerHTML = `<div><div class="lbl">${y} season</div><div class="big num">${d8(r.date)}</div></div><div><div class="lbl">Delhi AQI</div><div class="big num" style="color:var(${b[2]})">${n0(r.aqi)}</div></div><div><div class="lbl">Upwind fires</div><div class="big num" style="color:var(--ds)">${n0(r.fires)}</div></div>`;
-      if (++day < days.length) setTimeout(step, reduce ? 60 : 260);
-      else setTimeout(() => { playing = false; mode = "live"; pts = D.live?.fire_points || []; rp.hidden = true; windDir = D.live?.wind?.slice(-1)[0]?.wind_dir ?? 300; }, 2600);
-    };
-    step();
-  }
-  return { init, play };
-})();
 
 /* ───────────── rows ───────────── */
 function forecastRow() {

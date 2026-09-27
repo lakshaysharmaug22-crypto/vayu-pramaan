@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-27T20:07:48+00:00",
+ "generated_at": "2026-09-27T20:23:47+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -166,7 +166,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 562216,
+   "bytes": 562215,
    "license": "Open data; attribute the original source"
   },
   {
