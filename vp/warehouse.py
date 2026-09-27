@@ -61,10 +61,12 @@ def load_raw(con, res) -> dict[str, int]:
         from {f"read_parquet('{g}', union_by_name=true)" if g else
               "(select null::date date, null::varchar time_utc, null::double lat, null::double lon, null::double frp, null::varchar confidence, null::varchar satellite, null::varchar state where false)"}""")
     g = _glob("aqi")
+    has_aqi = bool(g) and "aqi" in set(con.execute(f"describe select * from read_parquet('{g}', union_by_name=true)").df().column_name)
+    aqi_expr = "avg(aqi)::double" if has_aqi else "null::double"
     con.execute(f"""create or replace table raw_aqi as
-        select station, ts::timestamp ts, avg(pm25)::double pm25, avg(pm10)::double pm10
+        select station, ts::timestamp ts, avg(pm25)::double pm25, avg(pm10)::double pm10, {aqi_expr} aqi
         from read_parquet('{g}', union_by_name=true) group by 1,2""" if g else
-                "create or replace table raw_aqi (station varchar, ts timestamp, pm25 double, pm10 double)")
+                "create or replace table raw_aqi (station varchar, ts timestamp, pm25 double, pm10 double, aqi double)")
     g = _glob("weather")
     # Prefer archive (hist_) rows over forecast rows for the same hour; among forecasts, the newest file.
     con.execute(f"""create or replace table raw_weather as
@@ -91,7 +93,7 @@ CONTRACTS = {
         ("pm10 within 0–2000 µg/m³", "select count(*) from raw_aqi where pm10 < 0 or pm10 > 2000", 0, "warn"),
         ("no duplicate station-hours", "select count(*) - count(distinct (station, ts)) from raw_aqi", 0, "error"),
         ("≥ 5 stations reporting", "select 5 - count(distinct station) from raw_aqi", 0, "error"),
-        ("pm25 null share < 40%", "select (avg(case when pm25 is null then 1 else 0 end) * 100)::int - 39 from raw_aqi", 0, "warn"),
+        ("PM2.5 or CPCB AQI present in ≥ 60% of rows", "select (avg(case when pm25 is null and aqi is null then 1 else 0 end) * 100)::int - 39 from raw_aqi", 0, "warn"),
     ],
     "raw_fires": [
         ("inside Punjab–Haryana bbox",
@@ -135,14 +137,31 @@ TRANSFORMS = {
     "station_daily": """
         create or replace table station_daily as
         select station, ts::date as date,
-               avg(pm25) pm25, avg(pm10) pm10, count(pm25) as hours,
-               greatest(si_pm25(avg(pm25)), coalesce(si_pm10(avg(pm10)), 0)) aqi
-        from raw_aqi group by 1, 2 having count(pm25) >= 16""",
+               avg(pm25) pm25, avg(pm10) pm10, greatest(count(pm25), count(aqi)) as hours,
+               case when count(pm25) >= 16 then greatest(si_pm25(avg(pm25)), coalesce(si_pm10(avg(pm10)), 0))
+                    else avg(aqi) end aqi,
+               case when count(pm25) >= 16 then 'concentrations' else 'cpcb_hourly_aqi' end as method
+        from raw_aqi group by 1, 2 having count(pm25) >= 16 or count(aqi) >= 16""",
+    # City AQI = mean of station AQIs on days with enough stations. On days with too few stations
+    # (recent days served by a single open-archive station), each station is scaled by its median
+    # ratio to the city AQI over days both existed, and the day is flagged proxy = true.
     "aqi_daily": f"""
         create or replace table aqi_daily as
-        select date, round(avg(aqi))::int aqi, round(avg(pm25), 1) pm25, round(avg(pm10), 1) pm10,
-               count(*) n_stations, aqi_band(avg(aqi)) band, grap_stage(avg(aqi)) grap
-        from station_daily group by date having count(*) >= {C.MIN_STATIONS_PER_DAY} order by date""",
+        with full_days as (
+            select date, avg(aqi) aqi, avg(pm25) pm25, avg(pm10) pm10, count(*) n
+            from station_daily group by date having count(*) >= {C.MIN_STATIONS_PER_DAY}),
+        ratio as (
+            select s.station, median(f.aqi / nullif(s.aqi, 0)) r
+            from station_daily s join full_days f using (date) group by s.station having count(*) >= 60),
+        proxy_days as (
+            select s.date, avg(s.aqi * r.r) aqi, avg(s.pm25) pm25, avg(s.pm10) pm10, count(*) n
+            from station_daily s join ratio r using (station)
+            where s.date not in (select date from full_days) group by s.date)
+        select date, round(aqi)::int aqi, round(pm25, 1) pm25, round(pm10, 1) pm10, n n_stations, false proxy,
+               aqi_band(aqi) band, grap_stage(aqi) grap from full_days
+        union all
+        select date, round(aqi)::int, round(pm25, 1), round(pm10, 1), n, true, aqi_band(aqi), grap_stage(aqi) from proxy_days
+        order by date""",
     "aqi_hourly_city": """
         create or replace table aqi_hourly_city as
         select ts, round(avg(pm25),1) pm25, round(avg(pm10),1) pm10, count(*) n_stations
@@ -187,7 +206,7 @@ TRANSFORMS = {
 }
 
 VIEWS = """
-create or replace view v_aqi_daily as select date, aqi, pm25, pm10, band, grap, n_stations from aqi_daily;
+create or replace view v_aqi_daily as select date, aqi, pm25, pm10, band, grap, n_stations, proxy from aqi_daily;
 create or replace view v_station_daily as select * from station_daily;
 create or replace view v_fires_upwind as select * from fires_daily;
 create or replace view v_wind_daily as select * from wind_daily;

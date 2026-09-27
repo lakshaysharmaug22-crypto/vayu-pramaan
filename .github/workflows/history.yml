@@ -41,4 +41,4 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/raw data/runs ledger site/data site/api
           git diff --cached --quiet || git commit -m "backfill: real data since 2017"
-          git push
+          git pull --rebase -q && git push

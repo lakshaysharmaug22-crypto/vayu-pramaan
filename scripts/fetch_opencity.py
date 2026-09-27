@@ -36,7 +36,8 @@ def main() -> None:
     print(f"{len(items)} CSV files listed")
     ok = 0
     for url, name in items:
-        fn = OUT / re.sub(r"[^A-Za-z0-9._-]+", "-", url.rsplit("/", 1)[-1] or name)
+        slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+        fn = OUT / f"{slug}.csv"
         if fn.exists() and fn.stat().st_size > 1000:
             ok += 1; continue
         for i in range(3):

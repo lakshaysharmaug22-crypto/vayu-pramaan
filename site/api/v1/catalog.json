@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-27T20:23:47+00:00",
+ "generated_at": "2026-09-27T22:23:22+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -8,8 +8,8 @@
    "description": "CPCB method: mean of station AQIs (PM2.5 + PM10 sub-indices, \u226516 valid hours).",
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
-   "rows": 3556,
-   "freshness": "2026-09-26",
+   "rows": 3557,
+   "freshness": "2026-09-27",
    "schema": [
     {
      "column_name": "date",
@@ -40,7 +40,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 376135,
+   "bytes": 375825,
    "license": "Open data; attribute the original source"
   },
   {
@@ -50,8 +50,8 @@
    "description": "One row per reporting station.",
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
-   "rows": 12,
-   "freshness": "2026-09-26",
+   "rows": 11,
+   "freshness": "2026-09-27",
    "schema": [
     {
      "column_name": "station",
@@ -78,7 +78,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 1441,
+   "bytes": 1260,
    "license": "Open data; attribute the original source"
   },
   {
@@ -88,8 +88,8 @@
    "description": "VIIRS detections in Punjab and Haryana, split by state.",
    "source": "NASA FIRMS",
    "cadence": "daily",
-   "rows": 3556,
-   "freshness": "2026-09-26",
+   "rows": 3557,
+   "freshness": "2026-09-27",
    "schema": [
     {
      "column_name": "date",
@@ -112,7 +112,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 296366,
+   "bytes": 296450,
    "license": "Open data; attribute the original source"
   },
   {
@@ -122,8 +122,8 @@
    "description": "Delhi wind, northwest-wind share (Delhi and Ludhiana), mixing height, temperature, humidity, rain.",
    "source": "Open-Meteo",
    "cadence": "daily",
-   "rows": 3556,
-   "freshness": "2026-09-26",
+   "rows": 3557,
+   "freshness": "2026-09-27",
    "schema": [
     {
      "column_name": "date",
@@ -166,7 +166,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 562215,
+   "bytes": 562230,
    "license": "Open data; attribute the original source"
   },
   {
@@ -176,8 +176,8 @@
    "description": "CAMS PM2.5/PM10 converted with the same CPCB method.",
    "source": "Copernicus CAMS via Open-Meteo",
    "cadence": "daily",
-   "rows": 1518,
-   "freshness": "2026-09-26",
+   "rows": 1519,
+   "freshness": "2026-09-27",
    "schema": [
     {
      "column_name": "date",
@@ -196,7 +196,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 93915,
+   "bytes": 93962,
    "license": "Open data; attribute the original source"
   },
   {
@@ -209,7 +209,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 620,
+   "bytes": 616,
    "license": "Open data"
   },
   {
@@ -222,7 +222,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 1133,
+   "bytes": 114,
    "license": "Open data"
   },
   {
@@ -235,7 +235,7 @@
    "rows": null,
    "freshness": "2026-09-27",
    "schema": [],
-   "bytes": 4028,
+   "bytes": 4030,
    "license": "Open data"
   }
  ]

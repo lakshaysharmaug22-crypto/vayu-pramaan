@@ -1,5 +1,4 @@
 {
-  "$comment": "Vercel serves the static site from /site. Daily forecast commits redeploy it; Nomad report commits are skipped (ignoreCommand) so a scan never triggers another scan.",
   "outputDirectory": "site",
   "buildCommand": "",
   "installCommand": "",

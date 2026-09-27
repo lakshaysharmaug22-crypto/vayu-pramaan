@@ -22,6 +22,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -168,38 +169,102 @@ def _pick(cols: list[str], *patterns: str) -> str | None:
     return None
 
 
-def aqi_opencity(res) -> pd.DataFrame:
-    """Parse the OpenCity CPCB station CSVs you downloaded into data/raw/aqi_opencity/.
+AGENCY = re.compile(r"\b(dpcc|cpcb|imd|iitm|du)\b", re.I)
+SERIES = re.compile(r"(15 minute )?aqi data( for)? ?\d{4}(-\d{2,4})?", re.I)
+MONTHS = {m: i for i, m in enumerate(["january", "february", "march", "april", "may", "june", "july", "august",
+                                      "september", "october", "november", "december"], 1)}
 
-    Column names vary between the 2017-23 hourly and 2024-25 15-minute series, so columns
-    are matched by pattern. Station name comes from the file name.
+
+def station_key(name: str) -> str:
+    n = re.sub(r"[-_,()]+", " ", str(name).lower())
+    n = re.sub(r"\b(15 minute|aqi|data|for|dilshad garden|delhi|new)\b|\b\d{2,4}\b", " ", n)
+    n = AGENCY.sub(" ", n)
+    return re.sub(r"[^a-z0-9]", "", n)
+
+
+def station_label(name: str) -> str:
+    n = SERIES.sub("", str(name))
+    n = re.sub(r"[-_]+", " ", AGENCY.sub("", n))
+    n = re.sub(r"\b(aqi|data|for|15|minute|csv|\d{4}( \d{2,4})?)\b", "", n, flags=re.I)
+    return re.sub(r"\s+", " ", n).strip().title().replace("R K ", "RK ").replace("Crri", "CRRI").replace("Dtu", "DTU") \
+        .replace("Igi", "IGI").replace("Ihbas", "IHBAS").replace("Nsit", "NSIT").replace("Ito", "ITO")
+
+
+def _parse_cpcb_grid(text: str, station: str) -> pd.DataFrame:
+    """CPCB monthly report grid: 'Year,2017', 'January-2017,00:00:00,…', then 'day,v0,…,v23' rows of hourly AQI."""
+    rows, year, month = [], None, None
+    for line in text.splitlines():
+        line = line.strip().strip('"')
+        if not line:
+            continue
+        head = line.split(",", 1)[0].strip()
+        if head.lower() == "year":
+            continue
+        m = re.match(r"^([A-Za-z]+)-(\d{4})$", head)
+        if m and m.group(1).lower() in MONTHS:
+            month, year = MONTHS[m.group(1).lower()], int(m.group(2)); continue
+        if month and head.isdigit():
+            day = int(head)
+            vals = line.split(",")[1:25]
+            for h, v in enumerate(vals):
+                v = v.strip()
+                if v:
+                    try:
+                        rows.append((year, month, day, h, float(v)))
+                    except ValueError:
+                        pass
+    if not rows:
+        return pd.DataFrame(columns=["station", "ts", "pm25", "pm10", "aqi"])
+    df = pd.DataFrame(rows, columns=["y", "m", "d", "h", "aqi"])
+    df["ts"] = pd.to_datetime(dict(year=df.y, month=df.m, day=df.d, hour=df.h), errors="coerce")
+    df = df.dropna(subset=["ts"])
+    return pd.DataFrame({"station": station, "ts": df.ts, "pm25": np.nan, "pm10": np.nan, "aqi": df.aqi})
+
+
+def _parse_long(df: pd.DataFrame, station: str, res) -> pd.DataFrame | None:
+    cols = list(df.columns)
+    tcol = _pick(cols, r"^timestamp", r"^(from|datetime|date ?time)", r"date", r"time")
+    p25, p10 = _pick(cols, r"pm\s*2\.?5", r"pm25"), _pick(cols, r"pm\s*10\b", r"^pm10")
+    if not tcol or not p25:
+        res.notes += f"skipped {station}: no time/PM2.5 columns. "
+        return None
+    ts = pd.to_datetime(df[tcol], errors="coerce", utc=True)
+    if ts.notna().mean() < .5:
+        ts = pd.to_datetime(df[tcol], errors="coerce", dayfirst=True).dt.tz_localize("Asia/Kolkata")
+    out = pd.DataFrame({"station": station, "ts": ts.dt.tz_convert("Asia/Kolkata").dt.tz_localize(None),
+                        "pm25": pd.to_numeric(df[p25], errors="coerce"),
+                        "pm10": pd.to_numeric(df[p10], errors="coerce") if p10 else np.nan, "aqi": np.nan})
+    out = out.dropna(subset=["ts"])
+    out["ts"] = out["ts"].dt.floor("h")
+    return out.groupby(["station", "ts"], as_index=False)[["pm25", "pm10", "aqi"]].mean()
+
+
+def aqi_opencity(res) -> pd.DataFrame:
+    """Parse the OpenCity CPCB station files in data/raw/aqi_opencity/.
+
+    2017–2023 files are CPCB's hourly station AQI in a monthly grid; 2024–25 files are 15-minute
+    concentrations (PM2.5, PM10) in long form. Both are normalised to station/ts rows.
     """
     folder = C.RAW / "aqi_opencity"
     files = sorted(folder.glob("*.csv"))
     if not files:
-        raise FileNotFoundError(f"no CSVs in {folder}. Download them first (README › Station data).")
-    frames = []
+        raise FileNotFoundError(f"no CSVs in {folder}. Run scripts/fetch_opencity.py first.")
+    frames, labels = [], {}
     for f in files:
-        df = pd.read_csv(f, low_memory=False)
-        cols = list(df.columns)
-        tcol = _pick(cols, r"^(from|timestamp|datetime|date ?time)", r"from", r"date", r"time")
-        p25 = _pick(cols, r"pm\s*2\.?5", r"pm25")
-        p10 = _pick(cols, r"pm\s*10\b", r"^pm10")
-        if not tcol or not p25:
-            res.notes += f"skipped {f.name}: couldn't find time/PM2.5 columns {cols[:8]}. "
-            continue
-        station = re.sub(r"(-?\d{4}(-\d{2,4})?)|(\.csv$)", "", f.stem).replace("del-", "").replace("-", " ").strip().title()
-        out = pd.DataFrame({
-            "station": station,
-            "ts": pd.to_datetime(df[tcol], errors="coerce", dayfirst=True),
-            "pm25": pd.to_numeric(df[p25], errors="coerce"),
-            "pm10": pd.to_numeric(df[p10], errors="coerce") if p10 else pd.NA,
-        }).dropna(subset=["ts"])
-        out["ts"] = out["ts"].dt.floor("h")
-        frames.append(out.groupby(["station", "ts"], as_index=False)[["pm25", "pm10"]].mean())
-    df = pd.concat(frames, ignore_index=True)
+        text = f.read_text(encoding="utf-8", errors="replace")
+        key = station_key(f.stem.replace("-", " "))
+        labels.setdefault(key, station_label(f.stem))
+        if text.lstrip().lower().startswith("year,"):
+            frames.append(_parse_cpcb_grid(text, labels[key]))
+        else:
+            d = _parse_long(pd.read_csv(io.StringIO(text), low_memory=False), labels[key], res)
+            if d is not None:
+                frames.append(d)
+    df = pd.concat([x for x in frames if len(x)], ignore_index=True)
+    df = df.groupby(["station", "ts"], as_index=False)[["pm25", "pm10", "aqi"]].mean()
     _save(df, "aqi", "opencity")
-    res.rows_in = sum(1 for _ in files)
+    res.rows_in = len(files)
+    res.notes += f"{df.station.nunique()} stations, {df.ts.min():%Y-%m-%d} to {df.ts.max():%Y-%m-%d}. "
     return df
 
 
@@ -229,7 +294,8 @@ def aqi_openaq_recent(res, days: int = 10) -> pd.DataFrame:
     for c in ("pm25", "pm10"):
         if c not in df:
             df[c] = pd.NA
-    df = df[["station", "ts", "pm25", "pm10"]]
+    df["aqi"] = np.nan
+    df = df[["station", "ts", "pm25", "pm10", "aqi"]]
     _save(df, "aqi", f"openaq_recent_{date.today():%Y%m%d}")
     return df
 

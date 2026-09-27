@@ -91,3 +91,23 @@ def test_psi_flags_real_shift_not_noise():
     same = _psi(ref, rng.normal(0, 1, 30))
     shifted = _psi(ref, rng.normal(2.5, 1, 30))
     assert shifted > 1.0 and shifted > 4 * same
+
+
+GRID = ('Year,2017\r\nJanuary-2017,' + ",".join(f"{h:02d}:00:00" for h in range(24)) + '\r\n"\n"\r\n'
+        'February-2017,' + ",".join(f"{h:02d}:00:00" for h in range(24)) + '\r\n'
+        '1,,,,,,,,,,,,,,,,,,,,,,,,\r\n2,,,,,,,,,,,,,,375.0,,316.0,,310.0,,220.0,,308.0,,157.0\r\n'
+        '3,120.0,,98.0,,93.0,,87.0,,147.0,98.0,140.0,120.0,,64.0,,95.0,,113.0,,120.0,,150.0,180.0,167.0\r\n')
+
+
+def test_cpcb_grid_parser():
+    from vp.ingest import _parse_cpcb_grid
+    df = _parse_cpcb_grid(GRID, "Alipur")
+    assert len(df) == 6 + 15
+    first = df.sort_values("ts").iloc[0]
+    assert str(first.ts) == "2017-02-02 13:00:00" and first.aqi == 375.0
+
+
+def test_station_names_match_across_series():
+    from vp.ingest import station_key
+    assert station_key("ihbas-dilshad-garden-cpcb-aqi-data-2017-2023") == station_key("ihbas-cpcb-15-minute-aqi-data-for-2024-25")
+    assert station_key("okhla-phase-2-dpcc-aqi-data-2017-2023") == station_key("Okhla Phase 2 15 minute AQI Data for 2024-25")
