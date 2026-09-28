@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-28T00:25:58+00:00",
+ "generated_at": "2026-09-28T05:45:40+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -166,7 +166,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 558601,
+   "bytes": 558602,
    "license": "Open data; attribute the original source"
   },
   {
@@ -209,7 +209,7 @@
    "rows": null,
    "freshness": "2026-09-28",
    "schema": [],
-   "bytes": 489,
+   "bytes": 449,
    "license": "Open data"
   },
   {
@@ -235,7 +235,7 @@
    "rows": null,
    "freshness": "2026-09-28",
    "schema": [],
-   "bytes": 5099,
+   "bytes": 5097,
    "license": "Open data"
   }
  ]
