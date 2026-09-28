@@ -19,12 +19,12 @@ Walk-forward backtest over seven October–November smog seasons (2019–2025, 4
 
 | Lead | MAE (AQI) | Persistence | Skill vs persistence | Diebold-Mariano p | 80% band coverage |
 |---|---|---|---|---|---|
-| 1 day | **32.6** | 35.0 | 6.8% | 0.058 | 76% |
-| 2 days | **44.2** | 50.3 | 11.9% | 0.007 | 70% |
-| 3 days | **50.1** | 57.7 | 13.2% | 0.010 | 72% |
-| 6 days | **55.1** | 71.2 | 22.7% | <0.001 | 68% |
+| 1 day | **32.7** | 35.0 | 6.5% | 0.067 | 78% |
+| 2 days | **44.3** | 50.3 | 11.8% | 0.008 | 71% |
+| 3 days | **49.8** | 57.7 | 13.8% | 0.007 | 72% |
+| 6 days | **54.9** | 71.2 | 22.9% | <0.001 | 67% |
 
-- **Severe days (AQI > 400):** 21 of 67 caught one day ahead (CSI 0.27).
+- **Severe days (AQI > 400):** 20 of 67 caught one day ahead (CSI 0.25).
 - **Data:** 667,875 satellite fire detections, 2.33M hourly readings from 37 CPCB stations, and 3,467 city-AQI days (from Jan 2017).
 - **Pipeline:** 3.2M raw rows checked against 20 data contracts in about 90 seconds a run, every day on GitHub Actions.
 - **Integrity:** SHA-256 Merkle roots in a hash chain. The chain is verified in CI and in the visitor's browser, and anchored with OpenTimestamps.
@@ -136,7 +136,7 @@ tests/         unit tests
 ## Roadmap
 
 - **Severe-day recall** beyond one day ahead: a dedicated classifier for AQI > 400.
-- **Winter band calibration:** coverage runs 68–76% against 80%. The plan is to calibrate conformal bands by season.
+- **Winter band calibration:** coverage runs 67–78% against 80%. The plan is to calibrate conformal bands by season.
 - **Fresher station data:** a live CPCB feed to shorten the 1–4 day archive lag.
 
 ## Data sources
