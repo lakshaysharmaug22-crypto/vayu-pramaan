@@ -1,7 +1,7 @@
-"""Ask Vayu · text-to-SQL analyst agent with guardrails, plus the daily AI brief.
+"""Ask Vayu: text-to-SQL analyst agent with guardrails, plus the daily AI brief.
 
 Provider: any OpenAI-compatible endpoint, picked from env in this order:
-  GROQ_API_KEY → Groq · GEMINI_API_KEY → Gemini (both have free tiers; GitHub Models was retired 30 Jul 2026)
+  GROQ_API_KEY (Groq), then GEMINI_API_KEY (Gemini). Both have free tiers.
 Guardrails: read-only DuckDB connection, whitelisted views, single SELECT/WITH statement,
 blocked keywords, forced LIMIT, and the SQL is always returned with the answer.
 """
@@ -164,7 +164,7 @@ def brief(facts: dict) -> dict:
                         f"P(severe) {round((f.get('p_severe') or 0) * 100)}%.", "generated_by": f"template (LLM unavailable: {e})"}
 
 
-# ───────────── eval ─────────────
+# ---- eval ----
 def load_eval() -> list[dict]:
     return json.loads((C.ROOT / "eval" / "questions.json").read_text())
 

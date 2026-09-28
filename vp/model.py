@@ -18,13 +18,15 @@ from .features import FEATURES
 QUANTILES = (0.1, 0.5, 0.9)
 PARAMS = dict(objective="quantile", learning_rate=0.03, n_estimators=500, num_leaves=15,
               min_child_samples=20, subsample=0.8, subsample_freq=1, colsample_bytree=0.8,
-              reg_lambda=1.0, verbose=-1)
+              reg_lambda=1.0, verbose=-1,
+              random_state=7, deterministic=True, force_row_wise=True, n_jobs=1)  # reproducible runs
 MODEL_DIR = C.DATA / "models"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 Z90 = 1.2815515655446004
 
 
 def _fit_raw(tr: pd.DataFrame) -> dict:
+    tr = tr.sort_values(["issue_date", "horizon_h"]).reset_index(drop=True)  # bagging is order-sensitive
     models = {}
     for q in QUANTILES:
         m = lgb.LGBMRegressor(alpha=q, **PARAMS)
@@ -85,7 +87,7 @@ def explain_row(models, row: pd.DataFrame) -> list[dict]:
     return [{"feature": f, "aqi_points": round(float(v))} for f, v in pairs]
 
 
-# ───────────── walk-forward backtest ─────────────
+# ---- walk-forward backtest ----
 def backtest(feats: pd.DataFrame) -> pd.DataFrame:
     out = []
     for y in C.BACKTEST_SEASONS:
@@ -135,7 +137,7 @@ def _climatology(train: pd.DataFrame, test: pd.DataFrame) -> np.ndarray:
     return test.target_date.dt.strftime("%m-%d").map(s).to_numpy()
 
 
-# ───────────── metrics ─────────────
+# ---- metrics ----
 def _pinball(y, q, a):
     d = y - q
     return np.mean(np.maximum(a * d, (a - 1) * d))
@@ -206,8 +208,8 @@ def calibration(bt: pd.DataFrame, bins: int = 5) -> list[dict]:
     return out
 
 
-# ───────────── live ─────────────
-LIVE: dict = {}  # horizon → (models, feature row) from the last live run, reused by the what-if grid
+# ---- live ----
+LIVE: dict = {}  # horizon -> (models, feature row) from the last live run, reused by the what-if grid
 
 
 def live_forecast(feats: pd.DataFrame) -> tuple[pd.DataFrame, dict, dict]:

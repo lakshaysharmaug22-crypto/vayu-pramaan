@@ -63,7 +63,7 @@ def _save(df: pd.DataFrame, source: str, name: str) -> Path:
     return path
 
 
-# ─────────────────────────── fires ───────────────────────────
+# ---- fires ----
 FIRMS_LIVE = [
     ("NOAA-20", "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_South_Asia_7d.csv"),
     ("S-NPP", "https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_South_Asia_7d.csv"),
@@ -108,7 +108,7 @@ def fires_live(res) -> pd.DataFrame:
 
 
 def fires_history(res, years: list[int]) -> pd.DataFrame:
-    """Yearly archive → FIRMS area API (needs FIRMS_MAP_KEY) → files you drop in data/raw/fires_manual/."""
+    """Yearly archive -> FIRMS area API (needs FIRMS_MAP_KEY) -> files you drop in data/raw/fires_manual/."""
     frames = []
     for y in years:
         target = _out("fires") / f"hist_{y}.parquet"
@@ -156,7 +156,7 @@ def _fires_manual(y: int) -> pd.DataFrame | None:
     return _normalise_fires(pd.concat(pd.read_csv(f) for f in files), "manual")
 
 
-# ─────────────────────────── station AQI ───────────────────────────
+# ---- station AQI ----
 OPENAQ_ARCHIVE = "https://openaq-data-archive.s3.amazonaws.com/records/csv.gz/locationid={lid}/year={y}/month={m:02d}/location-{lid}-{y}{m:02d}{d:02d}.csv.gz"
 # OpenAQ location ids for Delhi CPCB/DPCC stations. Find more on explore.openaq.org (search "Delhi").
 OPENAQ_DELHI = {235: "Anand Vihar"}
@@ -310,7 +310,7 @@ def aqi_openaq(res, start: date, end: date, name: str) -> pd.DataFrame:
     return df
 
 
-# ─────────────────────────── weather ───────────────────────────
+# ---- weather ----
 WEATHER_SITES = {"delhi": (C.DELHI_LAT, C.DELHI_LON), "ludhiana": (30.901, 75.857)}
 W_VARS = ["wind_speed_10m", "wind_direction_10m", "temperature_2m", "relative_humidity_2m",
           "precipitation", "boundary_layer_height"]
@@ -366,7 +366,7 @@ def weather_forecast(res) -> pd.DataFrame:
     return df
 
 
-# ─────────────────────────── CAMS ───────────────────────────
+# ---- CAMS ----
 CAMS_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 CAMS_START = "2022-08-01"  # CAMS global availability through Open-Meteo
 

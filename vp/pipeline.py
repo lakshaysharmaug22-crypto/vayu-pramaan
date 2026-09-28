@@ -31,7 +31,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     if synthetic and not C.SYNTHETIC:
         raise RuntimeError("use the CLI flag --synthetic (it sets VP_SYNTHETIC=1 before config loads)")
 
-    # ───────── 1 · ingest ─────────
+    # ---- 1. ingest ----
     if mode != "build":
         if synthetic:
             from . import synthetic as S
@@ -73,7 +73,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
 
     con = warehouse.connect()
 
-    # ───────── 2 · validate ─────────
+    # ---- 2. validate ----
     with R.step("validate", "load raw tables") as r:
         counts = warehouse.load_raw(con, r)
         r.checks = [Check(f"{t} not empty", n > 0, f"rows={n}", "error" if t in ("raw_aqi",) else "warn")
@@ -88,7 +88,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     if R.failed:
         return _halt(R, "validate")
 
-    # ───────── 3 · transform ─────────
+    # ---- 3. transform ----
     for name in warehouse.TRANSFORMS:
         with R.step("transform", name) as r:
             r.rows_out = warehouse.transform(con, name)
@@ -101,10 +101,10 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     if R.failed:
         return _halt(R, "transform")
 
-    # ───────── 4 · features ─────────
+    # ---- 4. features ----
     with R.step("features", "daily frame") as r:
         daily = features.daily_frame(con); r.rows_out = len(daily)
-    with R.step("features", "feature table (t0 → t0+h)") as r:
+    with R.step("features", "feature table (t0 -> t0+h)") as r:
         feats = features.build(daily, tuple(h // 24 for h in C.HORIZONS_H)); r.rows_out = len(feats)
         miss = feats[features.FEATURES].isna().mean().max()
         r.checks.append(Check("max feature null share < 30%", miss < 0.3, f"{miss:.1%}", "warn"))
@@ -114,7 +114,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     if R.failed:
         return _halt(R, "features")
 
-    # ───────── 5 · model ─────────
+    # ---- 5. model ----
     with R.step("model", "walk-forward backtest") as r:
         bt = model.backtest(feats); r.rows_out = len(bt)
         con.register("bt_df", bt)
@@ -144,7 +144,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     if R.failed:
         return _halt(R, "model")
 
-    # ───────── 6 · ledger ─────────
+    # ---- 6. ledger ----
     with R.step("ledger", "commit forecasts") as r:
         run_date, obs_date = ctx["issued_on"], str(fc.issue_date.max())[:10]
         rows = [{"source": "vayu", "issue_date": run_date, "obs_date": obs_date, "target_date": str(x.target_date)[:10],
@@ -188,7 +188,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
     with R.step("ledger", "grade settled forecasts") as r:
         graded = ledger.grade(con); ctx["graded"] = graded; r.rows_out = len(graded)
 
-    # ───────── 7 · insights ─────────
+    # ---- 7. insights ----
     with R.step("insights", "smog findings (6 queries)") as r:
         ctx["findings"] = insights.run_findings(con)
         bad = [f["id"] for f in ctx["findings"] if "error" in f]
@@ -222,7 +222,7 @@ def run(mode: str = "daily", synthetic: bool = False, commit_ledger: bool = True
             ctx["eval"] = _eval_reference_only(ro); r.status = "skipped"; r.notes = "no LLM key: reference answers only"
     ro.close()
 
-    # ───────── 8 · export ─────────
+    # ---- 8. export ----
     with R.step("export", "site JSON") as r:
         from . import export
         r.rows_out = export.write_all(ctx, R)

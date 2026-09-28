@@ -108,6 +108,6 @@ class _StepCtx:
             elif bad:
                 r.status = "warn"
         self.run.steps.append(r)
-        print(f"[{r.stage:>9}] {r.step} → {r.status} "
+        print(f"[{r.stage:>9}] {r.step} -> {r.status} "
               f"({r.rows_out if r.rows_out is not None else '-'} rows, {r.duration_s}s)", flush=True)
         return True  # never crash the whole run; the manifest records the failure

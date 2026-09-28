@@ -23,7 +23,7 @@ const FEAT = {
   dow: "Day of week", diwali_dist: "Days from Diwali",
 };
 
-/* ───────────── svg charts ───────────── */
+/* ---- svg charts ---- */
 const sc = (d0, d1, r0, r1) => v => r0 + (v - d0) / ((d1 - d0) || 1) * (r1 - r0);
 const svg = (w, h, inner, label = "") => `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}">${inner}</svg>`;
 function lineChart({ n, series = [], band: b, y0, y1, thresholds = [], xl = [], w = 320, h = 150, pad = [10, 10, 22, 34], yt }) {
@@ -76,7 +76,7 @@ const kw = sql => esc(sql).replace(/\b(select|from|where|group by|order by|join|
   .replace(/'[^']*'/g, m => `<span class="str">${m}</span>`);
 const table = (cols, rows, max = 50) => `<div class="tbl"><table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${rows.slice(0, max).map(r => `<tr>${cols.map(c => { const v = r[c]; return `<td class="${typeof v === "number" ? "r num" : ""}">${v == null ? "–" : esc(typeof v === "number" ? (Number.isInteger(v) ? v.toLocaleString("en-IN") : v.toFixed(v < 10 ? 3 : 1)) : v)}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
 
-/* ───────────── modal ───────────── */
+/* ---- modal ---- */
 const M = $("#modal");
 $("#m-close").onclick = () => M.close();
 M.addEventListener("click", e => { if (e.target === M) M.close(); });
@@ -86,7 +86,7 @@ function modal({ eyebrow = "", title, body, after }) {
   M.showModal(); b.scrollTop = 0; after && after(b);
 }
 
-/* ───────────── rows + cards ───────────── */
+/* ---- rows + cards ---- */
 function row({ id, title, role, c, sub, cards }) {
   const s = document.createElement("section");
   s.className = "row"; s.id = id; s.style.setProperty("--c", `var(${c})`);
@@ -112,7 +112,7 @@ function card({ title, eyebrow, body = "", foot, open, size = "", interactive = 
   return el;
 }
 
-/* ───────────── load ───────────── */
+/* ---- load ---- */
 Promise.allSettled(FILES.map(f => fetch(`data/${f}.json`, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(f); return r.json(); })))
   .then(res => {
     res.forEach((r, i) => { D[FILES[i]] = r.status === "fulfilled" ? r.value : null; });
@@ -131,7 +131,7 @@ function banner() {
   if (D.overview.synthetic) $("#banner").innerHTML = `<div class="banner"><b>Synthetic preview.</b> This build runs on generated test data so the site can be reviewed before the real pipeline runs. None of these numbers are observations.</div>`;
 }
 
-/* ───────────── hero + map ───────────── */
+/* ---- hero + map ---- */
 function hero() {
   const o = D.overview, f = [...(o.forecast || [])].sort((a, b) => a.horizon_h - b.horizon_h), t = f[0];
   if (!t) { $("#hero").innerHTML = `<p class="skeleton">No forecast yet.</p>`; return; }
@@ -216,7 +216,7 @@ function whyModal() {
   });
 }
 
-/* ───────────── rows ───────────── */
+/* ---- rows ---- */
 function forecastRow() {
   const o = D.overview, bt = D.backtest?.metrics || {}, m = bt.overall_48h || {}, byH = bt.by_horizon || [];
   const fc = [...(o.forecast || [])].sort((a, b) => a.horizon_h - b.horizon_h);
@@ -516,7 +516,7 @@ function nomadRow() {
   row({ id: "nomad", title: "Tested by Nomad Loop", role: "Engineering QA", c: "--qa", sub, cards: [verdict, how, ...bg, hc] });
 }
 
-/* ───────────── what-if simulator ───────────── */
+/* ---- what-if simulator ---- */
 function whatifRow() {
   const W = D.whatif; if (!W?.horizons || !Object.keys(W.horizons).length) return;
   const ax = W.axes, hs = Object.keys(W.horizons).sort((a, b) => a - b);
@@ -583,7 +583,7 @@ function whatifRow() {
   upd();
 }
 
-/* ───────────── model arena ───────────── */
+/* ---- model arena ---- */
 function arenaRow() {
   const A = D.arena; if (!A?.horizons?.length) return;
   const cards = A.horizons.map(h => {
@@ -610,7 +610,7 @@ function arenaModal(h) {
     body: `${table(["model", "n", "mae", "rmse", "bias", "csi", "severe_hits", "severe_days", "season_wins"], h.rows)}<p class="muted" style="margin:0">Bias is forecast minus observed: negative means the model runs low. ${esc(D.arena.note || "")}</p>` });
 }
 
-/* ───────────── lineage graph ───────────── */
+/* ---- lineage graph ---- */
 function lineageRow() {
   const Lg = D.lineage; if (!Lg?.nodes) return;
   const layers = ["source", "raw", "curated", "model", "product"], LC = { source: "var(--muted)", raw: "var(--de)", curated: "var(--da)", model: "var(--ds)", product: "var(--ai)" };
@@ -651,7 +651,7 @@ function lineageModal(n, ups, dns) {
       ${n.columns ? `<h3>Columns</h3>${table(["column_name", "data_type"], n.columns, 100)}` : ""}${n.checks?.length ? `<h3>Checks</h3>${table(["name", "passed", "detail"], n.checks.map(c => ({ ...c, passed: c.passed ? "pass" : "FAIL" })))}` : ""}` });
 }
 
-/* ───────────── model health (drift) ───────────── */
+/* ---- model health (drift) ---- */
 function healthRow() {
   const Dr = D.drift; if (!Dr?.features) return;
   const S = { drift: ["DRIFT", "var(--red)"], watch: ["WATCH", "var(--ba)"], stable: ["STABLE", "var(--qa)"] }[Dr.status] || ["–", "var(--dim)"];
@@ -685,7 +685,7 @@ function driftModal() {
       ${table(["feature", "psi", "null_p50", "threshold", "status", "ref_mean", "cur_mean"], Dr.features.map(f => ({ ...f, feature: FEAT[f.feature] || f.feature })), 40)}` });
 }
 
-/* ───────────── open data API ───────────── */
+/* ---- open data API ---- */
 function apiRow() {
   const Cg = D.catalog; if (!Cg?.datasets) return;
   const head = card({ eyebrow: "No key · no rate limit · rebuilt 06:00 IST", title: "Open data API",
@@ -709,7 +709,7 @@ function apiModal(d) {
     } });
 }
 
-/* ───────────── search palette ───────────── */
+/* ---- search palette ---- */
 const search = (() => {
   const P = $("#palette"), Q = $("#pal-q"), L = $("#pal-list");
   let items = null, daily = null, sel = 0, shown = [];

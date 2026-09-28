@@ -138,7 +138,7 @@ def _takeaway(fid: str, df: pd.DataFrame) -> str:
     return ""
 
 
-# ───────────── GRAP decision desk ─────────────
+# ---- GRAP decision desk ----
 def decision_table(bt: pd.DataFrame, horizon_h: int = 48) -> dict:
     """Confusion counts at every warning threshold, so the site can price any cost pair live."""
     g = bt[bt.horizon_h == horizon_h]
@@ -164,7 +164,7 @@ def grap_call(forecast: pd.DataFrame, threshold: float) -> dict:
             "p10": float(top.p10), "p90": float(top.p90), "threshold": threshold}
 
 
-# ───────────── daily brief facts (the LLM writes prose only from these) ─────────────
+# ---- daily brief facts (the LLM writes prose only from these) ----
 def brief_facts(con, forecast: pd.DataFrame, explain: dict) -> dict:
     last = con.execute("select * from v_aqi_daily order by date desc limit 1").df()
     fires = con.execute("select date, fires from v_fires_upwind order by date desc limit 4").df()

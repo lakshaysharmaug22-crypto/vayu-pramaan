@@ -11,7 +11,7 @@ import pandas as pd
 from . import config as C, ledger, model
 from .features import FEATURES
 
-# ───────────── what-if ─────────────
+# ---- what-if ----
 FIRE_MULT = [0, 0.25, 0.5, 0.75, 1, 1.5, 2]
 NW_LEVELS = [0, 0.25, 0.5, 0.75, 1]
 BLH_MULT = [0.5, 0.75, 1, 1.25, 1.5]
@@ -56,7 +56,7 @@ def _f(v):
     return None if pd.isna(v) else round(float(v), 3)
 
 
-# ───────────── model arena ─────────────
+# ---- model arena ----
 def arena(con, bt: pd.DataFrame) -> dict:
     if not len(bt):
         return {}
@@ -96,7 +96,7 @@ def arena(con, bt: pd.DataFrame) -> dict:
     return out
 
 
-# ───────────── drift monitor ─────────────
+# ---- drift monitor ----
 def _psi(ref: np.ndarray, cur: np.ndarray, bins: int = 10) -> float | None:
     """Population stability index with reference-quantile bins. Fewer bins for small windows,
     since PSI inflates when each bin holds only a handful of points."""
@@ -174,7 +174,7 @@ def drift(feats: pd.DataFrame, bt: pd.DataFrame, graded: pd.DataFrame | None, wi
             "watch" if any(r["status"] == "watch" for r in feats_out) else "stable"}
 
 
-# ───────────── lineage ─────────────
+# ---- lineage ----
 LINEAGE = {
     "nodes": [
         ("src_firms", "NASA FIRMS", "source"), ("src_cpcb", "CPCB stations", "source"), ("src_openaq", "OpenAQ archive", "source"),
@@ -200,7 +200,7 @@ LINEAGE = {
     ],
 }
 STEP_FOR = {"raw_fires": "contracts · raw_fires", "raw_aqi": "contracts · raw_aqi", "raw_weather": "contracts · raw_weather",
-            "raw_cams": "contracts · raw_cams", "features": "feature table (t0 → t0+h)", "backtest": "walk-forward backtest",
+            "raw_cams": "contracts · raw_cams", "features": "feature table (t0 -> t0+h)", "backtest": "walk-forward backtest",
             "live_models": "live forecast (train on all history)", "ledger": "verify chain"}
 
 
@@ -224,7 +224,7 @@ def lineage(con, run) -> dict:
     return {"nodes": nodes, "edges": [{"from": a, "to": b} for a, b in LINEAGE["edges"]]}
 
 
-# ───────────── public API + catalog ─────────────
+# ---- public API + catalog ----
 API = C.ROOT / "site" / "api" / "v1"
 DATASETS = [
     ("aqi/daily", "Delhi city AQI, daily", "select date, aqi, band, grap, pm25, pm10, n_stations from v_aqi_daily order by date",

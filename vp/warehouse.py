@@ -1,7 +1,7 @@
 """Stages 2-3 · Validate + Transform, all in DuckDB.
 
-Raw parquet → raw_* tables → contract checks → curated daily tables → agent views.
-AQI follows the CPCB method: 24h mean PM2.5 and PM10 → sub-indices → station AQI = max;
+Raw parquet -> raw_* tables -> contract checks -> curated daily tables -> agent views.
+AQI follows the CPCB method: 24h mean PM2.5 and PM10 -> sub-indices -> station AQI = max;
 city AQI = mean of station AQIs (stations with ≥16 valid hours).
 PM2.5 and PM10 dominate Delhi's winter AQI; other pollutants are not in the station exports,
 which the README states.
@@ -65,7 +65,7 @@ def load_raw(con, res) -> dict[str, int]:
     aqi_expr = "avg(aqi)::double" if has_aqi else "null::double"
     con.execute(f"""create or replace table raw_aqi as
         select station, ts::timestamp ts, avg(pm25)::double pm25, avg(pm10)::double pm10, {aqi_expr} aqi
-        from read_parquet('{g}', union_by_name=true) group by 1,2""" if g else
+        from read_parquet('{g}', union_by_name=true) group by 1,2 order by 1,2""" if g else
                 "create or replace table raw_aqi (station varchar, ts timestamp, pm25 double, pm10 double, aqi double)")
     g = _glob("weather")
     # Prefer archive (hist_) rows over forecast rows for the same hour; among forecasts, the newest file.
@@ -73,12 +73,13 @@ def load_raw(con, res) -> dict[str, int]:
         select * exclude (filename, prio) from (
           select *, case when filename like '%hist_%' then 1 else 0 end prio
           from read_parquet('{g}', union_by_name=true, filename=true))
-        qualify row_number() over (partition by site, ts order by prio desc, filename desc) = 1""" if g else
+        qualify row_number() over (partition by site, ts order by prio desc, filename desc) = 1
+        order by site, ts""" if g else
                 "create or replace table raw_weather (site varchar, ts timestamp, wind_speed double, wind_dir double, temp double, rh double, precip double, blh double)")
     g = _glob("cams")
     con.execute(f"""create or replace table raw_cams as
         select kind, issued::date issued, ts::timestamp ts, pm25::double pm25, pm10::double pm10
-        from read_parquet('{g}', union_by_name=true)""" if g else
+        from read_parquet('{g}', union_by_name=true) order by all""" if g else
                 "create or replace table raw_cams (kind varchar, issued date, ts timestamp, pm25 double, pm10 double)")
     for t in ("raw_fires", "raw_aqi", "raw_weather", "raw_cams"):
         counts[t] = con.execute(f"select count(*) from {t}").fetchone()[0]
@@ -86,7 +87,7 @@ def load_raw(con, res) -> dict[str, int]:
     return counts
 
 
-# ───────────── contracts ─────────────
+# ---- contracts ----
 CONTRACTS = {
     "raw_aqi": [
         ("pm25 within 0–1500 µg/m³", "select count(*) from raw_aqi where pm25 < 0 or pm25 > 1500", 0, "warn"),
@@ -132,7 +133,7 @@ def freshness_check(con, table: str, col: str, max_age_days: int) -> Check:
     return Check(f"{table} fresh within {max_age_days}d", age <= max_age_days, f"latest={latest} age={age}d", "warn")
 
 
-# ───────────── transforms ─────────────
+# ---- transforms ----
 TRANSFORMS = {
     "station_daily": """
         create or replace table station_daily as
@@ -215,6 +216,7 @@ create or replace view v_cams_daily as select date, aqi as aqi_equiv, pm25, pm10
 
 
 def transform(con, name: str) -> int:
+    con.execute("set threads = 1")  # parallel float sums are not order-stable; keep reruns identical
     con.execute(TRANSFORMS[name])
     return con.execute(f"select count(*) from {name}").fetchone()[0]
 

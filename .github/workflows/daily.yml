@@ -25,7 +25,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Pipeline (ingest → export)
+      - name: Pipeline (ingest -> export)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -45,8 +45,8 @@ jobs:
 
       - name: Commit ledger + site data
         run: |
-          git config user.name "vayu-pramaan-bot"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.name "Lakshay"
+          git config user.email "272748558+lakshaysharmaug22-crypto@users.noreply.github.com"
           git add ledger site/data site/api data/runs data/raw
           git diff --cached --quiet || git commit -m "forecast $(date -u +%F): ledger block + site data"
           git pull --rebase --autostash -q && git push

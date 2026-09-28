@@ -27,7 +27,7 @@ window.VayuMap = (() => {
     return hit ? stations[hit] : null;
   }
 
-  /* ───────── frame data ───────── */
+  /* ---- frame data ---- */
   function frame() {
     let fires, st, wind, aqi, date, fireCount;
     if (S.mode === "season" && seasonDays.length) {
@@ -108,7 +108,7 @@ window.VayuMap = (() => {
     return cv;
   }
 
-  /* ───────── deck layers ───────── */
+  /* ---- deck layers ---- */
   function render() {
     if (!overlay) return;
     const L = S.layers, t = S.t, dk = deck, layers = [];
@@ -153,7 +153,7 @@ window.VayuMap = (() => {
     if (layer.id === "fires") map.flyTo({ center: object.position, zoom: 9, pitch: 60, duration: 1400 });
   }
 
-  /* ───────── HUD: timeline + layer panel ───────── */
+  /* ---- HUD: timeline + layer panel ---- */
   function hud() {
     const b = $("#tl-date"), a = $("#tl-aqi"), f = $("#tl-fires"), w = $("#tl-wind");
     if (!b) return;
@@ -212,7 +212,7 @@ window.VayuMap = (() => {
   }
   function stop() { S.playing = false; clearTimeout(timer); const p = $("#tl-play"); if (p) p.textContent = "▶"; }
 
-  /* ───────── camera ───────── */
+  /* ---- camera ---- */
   const home = () => innerWidth < 760 ? { center: [76.3, 29.6], zoom: 5.6, pitch: 40, bearing: -10 } : { center: [75.2, 29.9], zoom: 6.55, pitch: 50, bearing: -14 };
   async function fly(force) {
     if ((reduce && !force) || S.flying) return;
@@ -228,7 +228,7 @@ window.VayuMap = (() => {
     S.flying = false;
   }
 
-  /* ───────── boot ───────── */
+  /* ---- boot ---- */
   async function styleOrFallback() {
     try {
       const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 3500);

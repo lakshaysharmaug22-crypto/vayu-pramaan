@@ -30,7 +30,7 @@ def generate(today: date, seed: int = 7) -> int:
     doy = days.dayofyear.to_numpy()
     yrs = days.year.to_numpy()
 
-    # ── fires: kharif (Oct–Nov) + rabi (Apr–May), declining trend in Punjab ──
+    # ---- fires: kharif (Oct–Nov) + rabi (Apr–May), declining trend in Punjab ----
     kharif = np.exp(-((doy - 308) / 13.0) ** 2)
     rabi = 0.25 * np.exp(-((doy - 120) / 12.0) ** 2)
     trend = np.interp(yrs, [2017, 2025], [1.0, 0.45])
@@ -39,7 +39,7 @@ def generate(today: date, seed: int = 7) -> int:
     pb_share = np.clip(np.interp(yrs, [2017, 2025], [0.82, 0.6]) + rng.normal(0, 0.04, n), 0.3, 0.95)
     fires_pb = rng.binomial(fires_n, pb_share)
 
-    # ── weather: NW regime persistence, higher in post-monsoon; winter inversion ──
+    # ---- weather: NW regime persistence, higher in post-monsoon; winter inversion ----
     nw = np.zeros(n)
     p_nw = 0.35 + 0.35 * np.exp(-((doy - 305) / 30.0) ** 2)
     state = 0.0
@@ -52,7 +52,7 @@ def generate(today: date, seed: int = 7) -> int:
     monsoon = np.exp(-((doy - 205) / 30.0) ** 2)
     precip = rng.gamma(0.6, 6.0, n) * (rng.random(n) < 0.08 + 0.55 * monsoon)
 
-    # ── PM2.5 daily: local base + transported smoke + inversion + festival ──
+    # ---- PM2.5 daily: local base + transported smoke + inversion + festival ----
     fires_lag1 = np.roll(fires_n, 1); fires_lag1[0] = 0
     diwali = pd.to_datetime(list(C.DIWALI.values()))
     dw = np.zeros(n)
@@ -70,7 +70,7 @@ def generate(today: date, seed: int = 7) -> int:
     pm25 = np.clip(pm25 + ar, 12, 900)
     pm10 = pm25 * rng.uniform(1.6, 2.1, n)
 
-    # ── hourly station data ──
+    # ---- hourly station data ----
     hours = np.arange(24)
     diurnal = 1 + 0.28 * np.cos(2 * np.pi * (hours - 22) / 24)
     frames = []
@@ -88,7 +88,7 @@ def generate(today: date, seed: int = 7) -> int:
     aqi = pd.concat(frames, ignore_index=True)
     aqi.to_parquet(C.RAW / "aqi" / "synthetic.parquet", index=False)
 
-    # ── fire points ──
+    # ---- fire points ----
     rows = np.repeat(np.arange(n), fires_n)
     is_pb = np.concatenate([np.r_[np.ones(p, bool), np.zeros(t - p, bool)] for p, t in zip(fires_pb, fires_n)]) \
         if len(rows) else np.array([], bool)
@@ -99,7 +99,7 @@ def generate(today: date, seed: int = 7) -> int:
                           "confidence": "n", "satellite": "SYNTH", "state": np.where(is_pb, "Punjab", "Haryana")})
     fires.to_parquet(C.RAW / "fires" / "synthetic.parquet", index=False)
 
-    # ── hourly weather, 2 sites ──
+    # ---- hourly weather, 2 sites ----
     wf = []
     for site, off in (("delhi", 0), ("ludhiana", 1)):
         ts = (days.to_numpy()[:, None] + (hours * 3600 * 10**9).astype("timedelta64[ns]")).ravel()
@@ -115,7 +115,7 @@ def generate(today: date, seed: int = 7) -> int:
             "blh": np.clip(blh[:, None] * (0.35 + 1.1 * np.clip(np.sin(np.pi * (hours - 6) / 12), 0, 1)), 60, 3000).ravel().round(0)}))
     pd.concat(wf).to_parquet(C.RAW / "weather" / "hist_synthetic.parquet", index=False)
 
-    # ── CAMS: biased low on smoky days, from Aug 2022 ──
+    # ---- CAMS: biased low on smoky days, from Aug 2022 ----
     m = days >= pd.Timestamp("2022-08-01")
     cd = days[m]
     c25 = pm25[m] * 0.72 - 0.02 * fires_lag1[m] + rng.normal(0, 18, m.sum())
