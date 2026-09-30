@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-28T05:45:40+00:00",
+ "generated_at": "2026-09-30T05:52:39+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -8,8 +8,8 @@
    "description": "CPCB method: mean of station AQIs (PM2.5 + PM10 sub-indices, \u226516 valid hours).",
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
-   "rows": 3467,
-   "freshness": "2026-09-24",
+   "rows": 3469,
+   "freshness": "2026-09-26",
    "schema": [
     {
      "column_name": "date",
@@ -40,7 +40,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 365252,
+   "bytes": 365456,
    "license": "Open data; attribute the original source"
   },
   {
@@ -51,7 +51,7 @@
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
    "rows": 1,
-   "freshness": "2026-09-24",
+   "freshness": "2026-09-26",
    "schema": [
     {
      "column_name": "station",
@@ -78,7 +78,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 174,
+   "bytes": 172,
    "license": "Open data; attribute the original source"
   },
   {
@@ -88,8 +88,8 @@
    "description": "VIIRS detections in Punjab and Haryana, split by state.",
    "source": "NASA FIRMS",
    "cadence": "daily",
-   "rows": 3557,
-   "freshness": "2026-09-27",
+   "rows": 3559,
+   "freshness": "2026-09-29",
    "schema": [
     {
      "column_name": "date",
@@ -112,7 +112,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 298508,
+   "bytes": 298677,
    "license": "Open data; attribute the original source"
   },
   {
@@ -122,8 +122,8 @@
    "description": "Delhi wind, northwest-wind share (Delhi and Ludhiana), mixing height, temperature, humidity, rain.",
    "source": "Open-Meteo",
    "cadence": "daily",
-   "rows": 3561,
-   "freshness": "2026-10-01",
+   "rows": 3563,
+   "freshness": "2026-10-03",
    "schema": [
     {
      "column_name": "date",
@@ -166,7 +166,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 558602,
+   "bytes": 558920,
    "license": "Open data; attribute the original source"
   },
   {
@@ -207,9 +207,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-09-28",
+   "freshness": "2026-09-30",
    "schema": [],
-   "bytes": 449,
+   "bytes": 485,
    "license": "Open data"
   },
   {
@@ -220,9 +220,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-09-28",
+   "freshness": "2026-09-30",
    "schema": [],
-   "bytes": 904,
+   "bytes": 1634,
    "license": "Open data"
   },
   {
@@ -233,9 +233,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-09-28",
+   "freshness": "2026-09-30",
    "schema": [],
-   "bytes": 5097,
+   "bytes": 5091,
    "license": "Open data"
   }
  ]
