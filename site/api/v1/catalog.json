@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-01T06:25:45+00:00",
+ "generated_at": "2026-10-02T06:02:36+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -8,8 +8,8 @@
    "description": "CPCB method: mean of station AQIs (PM2.5 + PM10 sub-indices, \u226516 valid hours).",
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
-   "rows": 3470,
-   "freshness": "2026-09-27",
+   "rows": 3471,
+   "freshness": "2026-09-28",
    "schema": [
     {
      "column_name": "date",
@@ -40,7 +40,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 365554,
+   "bytes": 365660,
    "license": "Open data; attribute the original source"
   },
   {
@@ -51,7 +51,7 @@
    "source": "CPCB via OpenCity / OpenAQ",
    "cadence": "daily",
    "rows": 1,
-   "freshness": "2026-09-27",
+   "freshness": "2026-09-28",
    "schema": [
     {
      "column_name": "station",
@@ -88,8 +88,8 @@
    "description": "VIIRS detections in Punjab and Haryana, split by state.",
    "source": "NASA FIRMS",
    "cadence": "daily",
-   "rows": 3560,
-   "freshness": "2026-09-30",
+   "rows": 3561,
+   "freshness": "2026-10-01",
    "schema": [
     {
      "column_name": "date",
@@ -112,7 +112,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 298762,
+   "bytes": 298847,
    "license": "Open data; attribute the original source"
   },
   {
@@ -122,8 +122,8 @@
    "description": "Delhi wind, northwest-wind share (Delhi and Ludhiana), mixing height, temperature, humidity, rain.",
    "source": "Open-Meteo",
    "cadence": "daily",
-   "rows": 3564,
-   "freshness": "2026-10-04",
+   "rows": 3565,
+   "freshness": "2026-10-05",
    "schema": [
     {
      "column_name": "date",
@@ -166,7 +166,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 559077,
+   "bytes": 559235,
    "license": "Open data; attribute the original source"
   },
   {
@@ -207,7 +207,7 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-01",
+   "freshness": "2026-10-02",
    "schema": [],
    "bytes": 485,
    "license": "Open data"
@@ -220,9 +220,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-01",
+   "freshness": "2026-10-02",
    "schema": [],
-   "bytes": 2364,
+   "bytes": 3094,
    "license": "Open data"
   },
   {
@@ -233,9 +233,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-01",
+   "freshness": "2026-10-02",
    "schema": [],
-   "bytes": 5090,
+   "bytes": 5095,
    "license": "Open data"
   }
  ]
