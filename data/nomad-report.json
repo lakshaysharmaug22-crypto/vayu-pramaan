@@ -1,16 +1,16 @@
 {
  "status": "complete",
  "run_id": "scan",
- "finished": "2026-10-01T06:32:08+00:00",
+ "finished": "2026-10-02T06:10:04+00:00",
  "target_url": "https://vayu-pramaan.vercel.app",
- "commit": "2d02b7b6cf2524ad0dc6559ed4e79e73b9403f03",
+ "commit": "10d74cdf6f6f4ee5e11d57ac5cffd6f35003fe2a",
  "verdict": "ship",
- "duration_s": 355,
+ "duration_s": 383,
  "stats": {
   "steps": 45,
   "states": 2,
   "edges": 45,
-  "bugs": 1,
+  "bugs": 2,
   "tierCounts": {
    "heuristic": 0,
    "ranker": 0,
@@ -23,25 +23,40 @@
    "failed": 0
   },
   "llmCalls": 0,
-  "elapsedMs": 294506,
-  "stepP50Ms": 5100,
-  "stepP95Ms": 5900
+  "elapsedMs": 335727,
+  "stepP50Ms": 5117,
+  "stepP95Ms": 7005
  },
  "bugs": [
   {
    "id": "NLE-001",
-   "title": "Failed API request on / after \u201cSearch\u201d",
+   "title": "Slow API response on /",
+   "type": "slow_response",
+   "severity": "minor",
+   "status": "unverified",
+   "confirmations": "0/3",
+   "foundAtStep": 0,
+   "url": "https://vayu-pramaan.vercel.app/",
+   "message": "GET /fonts/Montserrat%20Medium,Open%20Sans%20Bold,Noto%20Sans%20Regular,HanWangHeiLight%20Regular,NanumBarunGothic%20Reg",
+   "steps": [
+    "Open https://vayu-pramaan.vercel.app",
+    "Observe: GET /fonts/Montserrat%20Medium,Open%20Sans%20Bold,Noto%20Sans%20Regular,HanWangHeiLight%20Regular,NanumBarunGothic%20Reg"
+   ]
+  },
+  {
+   "id": "NLE-002",
+   "title": "Failed API request on / after \u201cToday\u201d",
    "type": "network_failure",
    "severity": "major",
    "status": "unverified",
    "confirmations": "0/3",
-   "foundAtStep": 1,
+   "foundAtStep": 12,
    "url": "https://vayu-pramaan.vercel.app/",
-   "message": "GET /elevation-tiles-prod/terrarium/10/732/427.png failed: net::ERR_ABORTED",
+   "message": "GET /elevation-tiles-prod/terrarium/9/367/208.png failed: net::ERR_ABORTED",
    "steps": [
     "Open https://vayu-pramaan.vercel.app/",
-    "Click \u201cSearch\u201d",
-    "Observe: GET /elevation-tiles-prod/terrarium/10/732/427.png failed: net::ERR_ABORTED"
+    "Click \u201cToday\u201d",
+    "Observe: GET /elevation-tiles-prod/terrarium/9/367/208.png failed: net::ERR_ABORTED"
    ]
   }
  ],
@@ -115,6 +130,16 @@
    "bugs": 1,
    "duration_s": 355,
    "commit": "2d02b7b6cf2524ad0dc6559ed4e79e73b9403f03"
+  },
+  {
+   "run_id": "scan",
+   "finished": "2026-10-02T06:10:04+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 2,
+   "duration_s": 383,
+   "commit": "10d74cdf6f6f4ee5e11d57ac5cffd6f35003fe2a"
   }
  ]
 }
