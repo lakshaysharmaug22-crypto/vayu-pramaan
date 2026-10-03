@@ -1,16 +1,16 @@
 {
  "status": "complete",
  "run_id": "scan",
- "finished": "2026-10-02T06:10:04+00:00",
+ "finished": "2026-10-03T05:44:03+00:00",
  "target_url": "https://vayu-pramaan.vercel.app",
- "commit": "10d74cdf6f6f4ee5e11d57ac5cffd6f35003fe2a",
+ "commit": "dda8fe5a817988d69fb8cf0220f90ee2d7960461",
  "verdict": "ship",
- "duration_s": 383,
+ "duration_s": 308,
  "stats": {
   "steps": 45,
   "states": 2,
   "edges": 45,
-  "bugs": 2,
+  "bugs": 0,
   "tierCounts": {
    "heuristic": 0,
    "ranker": 0,
@@ -23,43 +23,11 @@
    "failed": 0
   },
   "llmCalls": 0,
-  "elapsedMs": 335727,
-  "stepP50Ms": 5117,
-  "stepP95Ms": 7005
+  "elapsedMs": 267746,
+  "stepP50Ms": 5108,
+  "stepP95Ms": 6693
  },
- "bugs": [
-  {
-   "id": "NLE-001",
-   "title": "Slow API response on /",
-   "type": "slow_response",
-   "severity": "minor",
-   "status": "unverified",
-   "confirmations": "0/3",
-   "foundAtStep": 0,
-   "url": "https://vayu-pramaan.vercel.app/",
-   "message": "GET /fonts/Montserrat%20Medium,Open%20Sans%20Bold,Noto%20Sans%20Regular,HanWangHeiLight%20Regular,NanumBarunGothic%20Reg",
-   "steps": [
-    "Open https://vayu-pramaan.vercel.app",
-    "Observe: GET /fonts/Montserrat%20Medium,Open%20Sans%20Bold,Noto%20Sans%20Regular,HanWangHeiLight%20Regular,NanumBarunGothic%20Reg"
-   ]
-  },
-  {
-   "id": "NLE-002",
-   "title": "Failed API request on / after \u201cToday\u201d",
-   "type": "network_failure",
-   "severity": "major",
-   "status": "unverified",
-   "confirmations": "0/3",
-   "foundAtStep": 12,
-   "url": "https://vayu-pramaan.vercel.app/",
-   "message": "GET /elevation-tiles-prod/terrarium/9/367/208.png failed: net::ERR_ABORTED",
-   "steps": [
-    "Open https://vayu-pramaan.vercel.app/",
-    "Click \u201cToday\u201d",
-    "Observe: GET /elevation-tiles-prod/terrarium/9/367/208.png failed: net::ERR_ABORTED"
-   ]
-  }
- ],
+ "bugs": [],
  "history": [
   {
    "run_id": "scan",
@@ -140,6 +108,16 @@
    "bugs": 2,
    "duration_s": 383,
    "commit": "10d74cdf6f6f4ee5e11d57ac5cffd6f35003fe2a"
+  },
+  {
+   "run_id": "scan",
+   "finished": "2026-10-03T05:44:03+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 0,
+   "duration_s": 308,
+   "commit": "dda8fe5a817988d69fb8cf0220f90ee2d7960461"
   }
  ]
 }
