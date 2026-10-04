@@ -1,11 +1,11 @@
 {
  "status": "complete",
  "run_id": "scan",
- "finished": "2026-10-03T05:44:03+00:00",
+ "finished": "2026-10-04T06:19:32+00:00",
  "target_url": "https://vayu-pramaan.vercel.app",
- "commit": "dda8fe5a817988d69fb8cf0220f90ee2d7960461",
+ "commit": "a45faaa4de6e59cab33cd7e6251f775c06ec503e",
  "verdict": "ship",
- "duration_s": 308,
+ "duration_s": 311,
  "stats": {
   "steps": 45,
   "states": 2,
@@ -23,9 +23,9 @@
    "failed": 0
   },
   "llmCalls": 0,
-  "elapsedMs": 267746,
-  "stepP50Ms": 5108,
-  "stepP95Ms": 6693
+  "elapsedMs": 270268,
+  "stepP50Ms": 5103,
+  "stepP95Ms": 7110
  },
  "bugs": [],
  "history": [
@@ -118,6 +118,16 @@
    "bugs": 0,
    "duration_s": 308,
    "commit": "dda8fe5a817988d69fb8cf0220f90ee2d7960461"
+  },
+  {
+   "run_id": "scan",
+   "finished": "2026-10-04T06:19:32+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 0,
+   "duration_s": 311,
+   "commit": "a45faaa4de6e59cab33cd7e6251f775c06ec503e"
   }
  ]
 }
