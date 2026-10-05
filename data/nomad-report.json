@@ -1,16 +1,16 @@
 {
  "status": "complete",
  "run_id": "scan",
- "finished": "2026-10-04T06:19:32+00:00",
+ "finished": "2026-10-05T06:12:24+00:00",
  "target_url": "https://vayu-pramaan.vercel.app",
- "commit": "a45faaa4de6e59cab33cd7e6251f775c06ec503e",
+ "commit": "3d12afc4ebd92c1930b5ea8a3a4e1e9cebbdcd8f",
  "verdict": "ship",
- "duration_s": 311,
+ "duration_s": 333,
  "stats": {
   "steps": 45,
   "states": 2,
   "edges": 45,
-  "bugs": 0,
+  "bugs": 2,
   "tierCounts": {
    "heuristic": 0,
    "ranker": 0,
@@ -23,11 +23,42 @@
    "failed": 0
   },
   "llmCalls": 0,
-  "elapsedMs": 270268,
-  "stepP50Ms": 5103,
-  "stepP95Ms": 7110
+  "elapsedMs": 293069,
+  "stepP50Ms": 5444,
+  "stepP95Ms": 5982
  },
- "bugs": [],
+ "bugs": [
+  {
+   "id": "NLE-001",
+   "title": "Console error on /",
+   "type": "console_error",
+   "severity": "minor",
+   "status": "flaky",
+   "confirmations": "1/3",
+   "foundAtStep": 0,
+   "url": "https://vayu-pramaan.vercel.app/",
+   "message": "Error: <rect> attribute x: Expected length, \"NaN\".",
+   "steps": [
+    "Open https://vayu-pramaan.vercel.app",
+    "Observe: Error: <rect> attribute x: Expected length, \"NaN\"."
+   ]
+  },
+  {
+   "id": "NLE-002",
+   "title": "Failed API request on /",
+   "type": "network_failure",
+   "severity": "major",
+   "status": "unverified",
+   "confirmations": "0/3",
+   "foundAtStep": 0,
+   "url": "https://vayu-pramaan.vercel.app/",
+   "message": "GET /elevation-tiles-prod/terrarium/8/184/104.png failed: net::ERR_ABORTED",
+   "steps": [
+    "Open https://vayu-pramaan.vercel.app",
+    "Observe: GET /elevation-tiles-prod/terrarium/8/184/104.png failed: net::ERR_ABORTED"
+   ]
+  }
+ ],
  "history": [
   {
    "run_id": "scan",
@@ -128,6 +159,16 @@
    "bugs": 0,
    "duration_s": 311,
    "commit": "a45faaa4de6e59cab33cd7e6251f775c06ec503e"
+  },
+  {
+   "run_id": "scan",
+   "finished": "2026-10-05T06:12:24+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 2,
+   "duration_s": 333,
+   "commit": "3d12afc4ebd92c1930b5ea8a3a4e1e9cebbdcd8f"
   }
  ]
 }
