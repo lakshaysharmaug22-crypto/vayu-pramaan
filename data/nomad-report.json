@@ -1,11 +1,11 @@
 {
  "status": "complete",
  "run_id": "scan",
- "finished": "2026-10-05T06:12:24+00:00",
+ "finished": "2026-10-06T06:52:04+00:00",
  "target_url": "https://vayu-pramaan.vercel.app",
- "commit": "3d12afc4ebd92c1930b5ea8a3a4e1e9cebbdcd8f",
+ "commit": "f80f9cb305d93e8ce00f58795b7e63433a0d46a6",
  "verdict": "ship",
- "duration_s": 333,
+ "duration_s": 328,
  "stats": {
   "steps": 45,
   "states": 2,
@@ -23,9 +23,9 @@
    "failed": 0
   },
   "llmCalls": 0,
-  "elapsedMs": 293069,
-  "stepP50Ms": 5444,
-  "stepP95Ms": 5982
+  "elapsedMs": 288330,
+  "stepP50Ms": 5447,
+  "stepP95Ms": 5677
  },
  "bugs": [
   {
@@ -33,8 +33,8 @@
    "title": "Console error on /",
    "type": "console_error",
    "severity": "minor",
-   "status": "flaky",
-   "confirmations": "1/3",
+   "status": "unverified",
+   "confirmations": "0/3",
    "foundAtStep": 0,
    "url": "https://vayu-pramaan.vercel.app/",
    "message": "Error: <rect> attribute x: Expected length, \"NaN\".",
@@ -169,6 +169,16 @@
    "bugs": 2,
    "duration_s": 333,
    "commit": "3d12afc4ebd92c1930b5ea8a3a4e1e9cebbdcd8f"
+  },
+  {
+   "run_id": "scan",
+   "finished": "2026-10-06T06:52:04+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 2,
+   "duration_s": 328,
+   "commit": "f80f9cb305d93e8ce00f58795b7e63433a0d46a6"
   }
  ]
 }
