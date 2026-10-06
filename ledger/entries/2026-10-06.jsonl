@@ -1,0 +1,2 @@
+{"horizon_h":144,"issue_date":"2026-10-06","model_version":"bb4265f","obs_date":"2026-10-01","p10":64.0,"p50":133.0,"p90":175.0,"p_severe":0.0,"source":"vayu","target_date":"2026-10-07"}
+{"horizon_h":24,"issue_date":"2026-10-06","model_version":"bb4265f","p50":115.0,"source":"cams","target_date":"2026-10-07"}
