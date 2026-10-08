@@ -1,16 +1,16 @@
 {
  "status": "complete",
  "run_id": "scan",
- "finished": "2026-10-06T06:52:04+00:00",
+ "finished": "2026-10-08T06:38:49+00:00",
  "target_url": "https://vayu-pramaan.vercel.app",
- "commit": "f80f9cb305d93e8ce00f58795b7e63433a0d46a6",
+ "commit": "9d3c05e9872b7bccf513c85a5fbea9ceeb00e153",
  "verdict": "ship",
- "duration_s": 328,
+ "duration_s": 304,
  "stats": {
   "steps": 45,
   "states": 2,
   "edges": 45,
-  "bugs": 2,
+  "bugs": 1,
   "tierCounts": {
    "heuristic": 0,
    "ranker": 0,
@@ -23,28 +23,13 @@
    "failed": 0
   },
   "llmCalls": 0,
-  "elapsedMs": 288330,
-  "stepP50Ms": 5447,
-  "stepP95Ms": 5677
+  "elapsedMs": 270558,
+  "stepP50Ms": 5404,
+  "stepP95Ms": 5675
  },
  "bugs": [
   {
    "id": "NLE-001",
-   "title": "Console error on /",
-   "type": "console_error",
-   "severity": "minor",
-   "status": "unverified",
-   "confirmations": "0/3",
-   "foundAtStep": 0,
-   "url": "https://vayu-pramaan.vercel.app/",
-   "message": "Error: <rect> attribute x: Expected length, \"NaN\".",
-   "steps": [
-    "Open https://vayu-pramaan.vercel.app",
-    "Observe: Error: <rect> attribute x: Expected length, \"NaN\"."
-   ]
-  },
-  {
-   "id": "NLE-002",
    "title": "Failed API request on /",
    "type": "network_failure",
    "severity": "major",
@@ -52,10 +37,10 @@
    "confirmations": "0/3",
    "foundAtStep": 0,
    "url": "https://vayu-pramaan.vercel.app/",
-   "message": "GET /elevation-tiles-prod/terrarium/8/184/104.png failed: net::ERR_ABORTED",
+   "message": "GET /elevation-tiles-prod/terrarium/8/184/103.png failed: net::ERR_ABORTED",
    "steps": [
     "Open https://vayu-pramaan.vercel.app",
-    "Observe: GET /elevation-tiles-prod/terrarium/8/184/104.png failed: net::ERR_ABORTED"
+    "Observe: GET /elevation-tiles-prod/terrarium/8/184/103.png failed: net::ERR_ABORTED"
    ]
   }
  ],
@@ -179,6 +164,16 @@
    "bugs": 2,
    "duration_s": 328,
    "commit": "f80f9cb305d93e8ce00f58795b7e63433a0d46a6"
+  },
+  {
+   "run_id": "scan",
+   "finished": "2026-10-08T06:38:49+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 1,
+   "duration_s": 304,
+   "commit": "9d3c05e9872b7bccf513c85a5fbea9ceeb00e153"
   }
  ]
 }
