@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-12T06:23:34+00:00",
+ "generated_at": "2026-10-13T07:02:13+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -88,8 +88,8 @@
    "description": "VIIRS detections in Punjab and Haryana, split by state.",
    "source": "NASA FIRMS",
    "cadence": "daily",
-   "rows": 3571,
-   "freshness": "2026-10-11",
+   "rows": 3572,
+   "freshness": "2026-10-12",
    "schema": [
     {
      "column_name": "date",
@@ -112,7 +112,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 299696,
+   "bytes": 299781,
    "license": "Open data; attribute the original source"
   },
   {
@@ -122,8 +122,8 @@
    "description": "Delhi wind, northwest-wind share (Delhi and Ludhiana), mixing height, temperature, humidity, rain.",
    "source": "Open-Meteo",
    "cadence": "daily",
-   "rows": 3575,
-   "freshness": "2026-10-15",
+   "rows": 3576,
+   "freshness": "2026-10-16",
    "schema": [
     {
      "column_name": "date",
@@ -166,7 +166,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 560795,
+   "bytes": 560957,
    "license": "Open data; attribute the original source"
   },
   {
@@ -207,9 +207,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-12",
+   "freshness": "2026-10-13",
    "schema": [],
-   "bytes": 348,
+   "bytes": 626,
    "license": "Open data"
   },
   {
@@ -220,7 +220,7 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-12",
+   "freshness": "2026-10-13",
    "schema": [],
    "bytes": 8935,
    "license": "Open data"
@@ -233,9 +233,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-12",
+   "freshness": "2026-10-13",
    "schema": [],
-   "bytes": 5099,
+   "bytes": 5090,
    "license": "Open data"
   }
  ]
