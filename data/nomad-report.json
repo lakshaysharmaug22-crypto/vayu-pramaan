@@ -1,16 +1,16 @@
 {
  "status": "complete",
  "run_id": "scan",
- "finished": "2026-10-13T07:08:25+00:00",
+ "finished": "2026-10-14T05:22:05+00:00",
  "target_url": "https://vayu-pramaan.vercel.app",
- "commit": "bd111bf98931f7ce8de3b041dce901812ce2d846",
+ "commit": "ebed927a9b636ec89e106201c99f50d6cb757f6e",
  "verdict": "ship",
- "duration_s": 346,
+ "duration_s": 310,
  "stats": {
   "steps": 45,
   "states": 2,
   "edges": 45,
-  "bugs": 1,
+  "bugs": 0,
   "tierCounts": {
    "heuristic": 0,
    "ranker": 0,
@@ -23,28 +23,11 @@
    "failed": 0
   },
   "llmCalls": 0,
-  "elapsedMs": 301616,
-  "stepP50Ms": 5104,
-  "stepP95Ms": 6490
+  "elapsedMs": 271271,
+  "stepP50Ms": 5364,
+  "stepP95Ms": 6985
  },
- "bugs": [
-  {
-   "id": "NLE-001",
-   "title": "Failed API request on / after \u201cSearch\u201d",
-   "type": "network_failure",
-   "severity": "major",
-   "status": "unverified",
-   "confirmations": "0/3",
-   "foundAtStep": 1,
-   "url": "https://vayu-pramaan.vercel.app/",
-   "message": "GET /elevation-tiles-prod/terrarium/10/732/427.png failed: net::ERR_ABORTED",
-   "steps": [
-    "Open https://vayu-pramaan.vercel.app/",
-    "Click \u201cSearch\u201d",
-    "Observe: GET /elevation-tiles-prod/terrarium/10/732/427.png failed: net::ERR_ABORTED"
-   ]
-  }
- ],
+ "bugs": [],
  "history": [
   {
    "run_id": "scan",
@@ -225,6 +208,16 @@
    "bugs": 1,
    "duration_s": 346,
    "commit": "bd111bf98931f7ce8de3b041dce901812ce2d846"
+  },
+  {
+   "run_id": "scan",
+   "finished": "2026-10-14T05:22:05+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 0,
+   "duration_s": 310,
+   "commit": "ebed927a9b636ec89e106201c99f50d6cb757f6e"
   }
  ]
 }
