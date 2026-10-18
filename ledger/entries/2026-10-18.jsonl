@@ -1,0 +1,2 @@
+{"horizon_h":144,"issue_date":"2026-10-18","model_version":"dfaa345","obs_date":"2026-10-13","p10":96.0,"p50":202.0,"p90":256.0,"p_severe":0.001,"source":"vayu","target_date":"2026-10-19"}
+{"horizon_h":24,"issue_date":"2026-10-18","model_version":"dfaa345","p50":264.0,"source":"cams","target_date":"2026-10-19"}

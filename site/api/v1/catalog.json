@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-17T04:53:39+00:00",
+ "generated_at": "2026-10-18T05:00:44+00:00",
  "datasets": [
   {
    "id": "aqi/daily",
@@ -78,7 +78,7 @@
      "column_type": "BIGINT"
     }
    ],
-   "bytes": 174,
+   "bytes": 173,
    "license": "Open data; attribute the original source"
   },
   {
@@ -88,8 +88,8 @@
    "description": "VIIRS detections in Punjab and Haryana, split by state.",
    "source": "NASA FIRMS",
    "cadence": "daily",
-   "rows": 3576,
-   "freshness": "2026-10-16",
+   "rows": 3577,
+   "freshness": "2026-10-17",
    "schema": [
     {
      "column_name": "date",
@@ -112,7 +112,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 300119,
+   "bytes": 300205,
    "license": "Open data; attribute the original source"
   },
   {
@@ -122,8 +122,8 @@
    "description": "Delhi wind, northwest-wind share (Delhi and Ludhiana), mixing height, temperature, humidity, rain.",
    "source": "Open-Meteo",
    "cadence": "daily",
-   "rows": 3580,
-   "freshness": "2026-10-20",
+   "rows": 3581,
+   "freshness": "2026-10-21",
    "schema": [
     {
      "column_name": "date",
@@ -166,7 +166,7 @@
      "column_type": "DOUBLE"
     }
    ],
-   "bytes": 561578,
+   "bytes": 561730,
    "license": "Open data; attribute the original source"
   },
   {
@@ -207,9 +207,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-17",
+   "freshness": "2026-10-18",
    "schema": [],
-   "bytes": 492,
+   "bytes": 351,
    "license": "Open data"
   },
   {
@@ -220,9 +220,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-17",
+   "freshness": "2026-10-18",
    "schema": [],
-   "bytes": 11861,
+   "bytes": 12228,
    "license": "Open data"
   },
   {
@@ -233,9 +233,9 @@
    "source": "Vayu Pramaan",
    "cadence": "daily",
    "rows": null,
-   "freshness": "2026-10-17",
+   "freshness": "2026-10-18",
    "schema": [],
-   "bytes": 5095,
+   "bytes": 5097,
    "license": "Open data"
   }
  ]
