@@ -1,11 +1,11 @@
 {
  "status": "complete",
  "run_id": "scan",
- "finished": "2026-10-18T05:06:56+00:00",
+ "finished": "2026-10-19T05:13:33+00:00",
  "target_url": "https://vayu-pramaan.vercel.app",
- "commit": "30cb44eb2e90673d9d08abff62a32721e2434422",
+ "commit": "fd3c03e1f1628da13100bfb8e5d25f88e31ee874",
  "verdict": "ship",
- "duration_s": 344,
+ "duration_s": 325,
  "stats": {
   "steps": 45,
   "states": 2,
@@ -23,25 +23,24 @@
    "failed": 0
   },
   "llmCalls": 0,
-  "elapsedMs": 304506,
-  "stepP50Ms": 5105,
-  "stepP95Ms": 6226
+  "elapsedMs": 287198,
+  "stepP50Ms": 5582,
+  "stepP95Ms": 5838
  },
  "bugs": [
   {
    "id": "NLE-001",
-   "title": "Failed API request on / after \u201cSearch\u201d",
-   "type": "network_failure",
-   "severity": "major",
+   "title": "Slow API response on /",
+   "type": "slow_response",
+   "severity": "minor",
    "status": "unverified",
    "confirmations": "0/3",
-   "foundAtStep": 1,
+   "foundAtStep": 0,
    "url": "https://vayu-pramaan.vercel.app/",
-   "message": "GET /elevation-tiles-prod/terrarium/10/732/427.png failed: net::ERR_ABORTED",
+   "message": "GET /fonts/Montserrat%20Medium,Open%20Sans%20Bold,Noto%20Sans%20Regular,HanWangHeiLight%20Regular,NanumBarunGothic%20Reg",
    "steps": [
-    "Open https://vayu-pramaan.vercel.app/",
-    "Click \u201cSearch\u201d",
-    "Observe: GET /elevation-tiles-prod/terrarium/10/732/427.png failed: net::ERR_ABORTED"
+    "Open https://vayu-pramaan.vercel.app",
+    "Observe: GET /fonts/Montserrat%20Medium,Open%20Sans%20Bold,Noto%20Sans%20Regular,HanWangHeiLight%20Regular,NanumBarunGothic%20Reg"
    ]
   }
  ],
@@ -275,6 +274,16 @@
    "bugs": 1,
    "duration_s": 344,
    "commit": "30cb44eb2e90673d9d08abff62a32721e2434422"
+  },
+  {
+   "run_id": "scan",
+   "finished": "2026-10-19T05:13:33+00:00",
+   "verdict": "ship",
+   "steps": 45,
+   "states": 2,
+   "bugs": 1,
+   "duration_s": 325,
+   "commit": "fd3c03e1f1628da13100bfb8e5d25f88e31ee874"
   }
  ]
 }
