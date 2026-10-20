@@ -1,0 +1,4 @@
+{"horizon_h":120,"issue_date":"2026-10-20","model_version":"03d7528","obs_date":"2026-10-16","p10":109.0,"p50":185.0,"p90":229.0,"p_severe":0.0,"source":"vayu","target_date":"2026-10-21"}
+{"horizon_h":144,"issue_date":"2026-10-20","model_version":"03d7528","obs_date":"2026-10-16","p10":127.0,"p50":217.0,"p90":282.0,"p_severe":0.001,"source":"vayu","target_date":"2026-10-22"}
+{"horizon_h":24,"issue_date":"2026-10-20","model_version":"03d7528","p50":193.0,"source":"cams","target_date":"2026-10-21"}
+{"horizon_h":48,"issue_date":"2026-10-20","model_version":"03d7528","p50":252.0,"source":"cams","target_date":"2026-10-22"}
